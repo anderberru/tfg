@@ -1,0 +1,5 @@
+--CREATE DATABASE struts;
+
+CREATE USER 'struts' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON struts.* TO 'struts';
+FLUSH PRIVILEGES;

@@ -1,0 +1,56 @@
+BOX_IMAGE = "bento/ubuntu-20.04"
+NODE_COUNT = 0
+
+Vagrant.configure("2") do |config|
+    config.vm.boot_timeout = 900
+
+    config.vm.provider "virtualbox" do |vb|
+        vb.gui = true
+    end
+    # Servidor en la LAN (solo acceso interno)
+    config.vm.define "lan" do |lan|
+      lan.vm.box = BOX_IMAGE
+      lan.vm.network "private_network", type: "static", ip: "192.168.10.10" # Red interna (LAN)
+      
+      lan.vm.provision "shell", inline: <<-SHELL
+        apt-get update
+        apt-get install -y traceroute
+        ip route del default via 10.0.2.2
+        ip route del default via 192.168.1.1
+        ip route add default via 192.168.10.4
+      SHELL
+      lan.vm.provision "shell", path: "lan.sh"
+    end
+  
+    # Servidor en la DMZ (accesible desde el exterior y la LAN)
+    config.vm.define "dmz" do |dmz|
+      dmz.vm.box = BOX_IMAGE
+      dmz.vm.network "private_network", type: "static", ip: "192.168.20.10" # Red DMZ
+      #dmz.vm.network "public_network", bridge: "eth0" # Acceso externo (Internet)
+      #dmz.vm.network "forwarded_port", guest: 8080, host: 9090 # Acceso a Tomcat
+      
+      dmz.vm.provision "shell", inline: <<-SHELL
+        apt-get update
+        apt-get install -y avahi-daemon libnss-mdns
+        apt-get install -y openjdk-21-jdk
+        apt-get install -y traceroute
+        ip route del default via 10.0.2.2
+        ip route del default via 192.168.1.1
+        ip route add default via 192.168.20.4
+      SHELL
+
+       dmz.vm.provision "shell", path: "tomcat.sh", privileged: false
+       dmz.vm.provision "shell", path: "dmz.sh"
+    end
+  
+    # Firewall/Gateway (conecta LAN, DMZ e Internet)
+    config.vm.define "firewall" do |fw|
+      fw.vm.box = BOX_IMAGE
+      fw.vm.network "private_network", type: "static", ip: "192.168.10.4" # Red LAN
+      fw.vm.network "private_network", type: "static", ip: "192.168.20.4" # Red DMZ
+      fw.vm.network "public_network", bridge: "eth3", type: "dhcp" # Acceso externo (Internet)
+
+      fw.vm.provision "shell", path: "firewall.sh"
+    end
+  end
+  

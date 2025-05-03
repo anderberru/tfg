@@ -1,0 +1,18 @@
+BOX_IMAGE = "bento/ubuntu-20.04"
+NODE_COUNT = 2
+
+Vagrant.configure("2") do |config|
+    config.vm.boot_timeout = 900
+    config.vm.provider "virtualbox" do |vb|
+        vb.gui = true
+    end
+    config.vm.define "master" do |subconfig|
+        subconfig.vm.box = BOX_IMAGE
+    end
+
+    (1..NODE_COUNT).each do |i|
+        config.vm.define "nodo#{i}" do |subconfig|
+            subconfig.vm.box = BOX_IMAGE
+        end
+    end
+end

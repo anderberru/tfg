@@ -1,0 +1,38 @@
+BOX_IMAGE = "bento/ubuntu-20.04"
+NODE_COUNT = 0
+
+Vagrant.configure("2") do |config|
+    config.vm.boot_timeout = 900
+
+    config.vm.provider "virtualbox" do |vb|
+        vb.gui = true
+    end
+
+    config.vm.define "master" do |subconfig|
+        subconfig.vm.box = BOX_IMAGE
+        subconfig.vm.hostname = "master"
+        subconfig.vm.network :private_network, ip: "10.0.0.10"
+        # Reenvío de puertos para acceder a Tomcat desde el host
+        subconfig.vm.network "forwarded_port", guest: 8080, host: 9090
+    end
+
+    (1..NODE_COUNT).each do |i|
+        config.vm.define "nodo#{i}" do |subconfig|
+            subconfig.vm.box = BOX_IMAGE
+            subconfig.vm.hostname = "nodo#{i}"
+            subconfig.vm.network :private_network, ip: "10.0.0.#{i + 10}"
+            subconfig.vm.network "forwarded_port", guest: 8080, host: 9090 + i
+        end
+    end
+
+    # Install avahi on all machines
+    config.vm.provision "shell", inline: <<-SHELL
+        apt-get update
+        apt-get install -y avahi-daemon libnss-mdns
+        apt-get install -y openjdk-21-jdk
+    SHELL
+
+    config.vm.provision "shell", path: "tomcat.sh", privileged: false
+
+    
+end

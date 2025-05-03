@@ -25,3 +25,7 @@ frontend/*.local
 *.sln
 *.sw?
 
+# vagrant
+vagrant/.vagrant
+vagrant/programs/tensorflow-2.7.1-cp39-cp39-linux_x86_64.whl
+
