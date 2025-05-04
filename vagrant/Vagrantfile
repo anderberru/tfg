@@ -19,7 +19,11 @@ Vagrant.configure("2") do |config|
     # Firewall/Gateway (conecta LAN, DMZ e Internet)
     config.vm.define "firewall1" do |fw1|
       fw1.vm.box = BOX_IMAGE
-      fw1.vm.network "private_network", type: "static", ip: "10.10.30.1" # firewall2
+      if DUAL_FIREWALL == 1
+        fw1.vm.network "private_network", type: "static", ip: "10.10.30.1" # firewall2
+      else
+        fw1.vm.network "private_network", type: "static", ip: "10.10.10.5" # Red LAN
+      end
       fw1.vm.network "private_network", type: "static", ip: "10.10.20.5" # Red DMZ
       
       # Detectar sistema operativo y obtener interfaz con salida a Internet
@@ -58,17 +62,24 @@ Vagrant.configure("2") do |config|
       # Usar la interfaz detectada en public_network
       config.vm.network "public_network", bridge: default_iface
       
-      fw1.vm.provision "shell", path: "firewall1.sh"
+      if DUAL_FIREWALL == 1
+        fw1.vm.provision "shell", path: "firewall1.sh"
+      else
+        fw1.vm.provision "shell", path: "DMZ1/firewall_simple.sh"
+      end
     end
 
-    config.vm.define "firewall2" do |fw2|
-      fw2.vm.box = BOX_IMAGE
-      fw2.vm.network "private_network", type: "static", ip: "10.10.10.4" # Red LAN
-      fw2.vm.network "private_network", type: "static", ip: "10.10.20.4" # Red DMZ
-      fw2.vm.network "private_network", type: "static", ip: "10.10.30.2" # firewall1
-
-      fw2.vm.provision "shell", path: "firewall2.sh"
+    if DUAL_FIREWALL == 1
+      config.vm.define "firewall2" do |fw2|
+        fw2.vm.box = BOX_IMAGE
+        fw2.vm.network "private_network", type: "static", ip: "10.10.10.4" # Red LAN
+        fw2.vm.network "private_network", type: "static", ip: "10.10.20.4" # Red DMZ
+        fw2.vm.network "private_network", type: "static", ip: "10.10.30.2" # firewall1
+  
+        fw2.vm.provision "shell", path: "firewall2.sh"
+      end
     end
+    
 
     # Servidor en la DMZ (accesible desde el exterior y la LAN)
     config.vm.define "dmz" do |dmz|
@@ -96,7 +107,12 @@ Vagrant.configure("2") do |config|
       dmz.vm.provision "shell", path: "lucid_install.sh", privileged: false
       dmz.vm.provision "shell", path: "mysql_config.sh"
       dmz.vm.provision "shell", path: "tomcat.sh", privileged: false
-      dmz.vm.provision "shell", path: "dmz.sh"
+      if DUAL_FIREWALL == 1
+        dmz.vm.provision "shell", path: "dmz.sh"
+      else
+        dmz.vm.provision "shell", path: "DMZ1/dmz_simple.sh"
+      end
+      
     end
 
     # Servidor en la LAN (solo acceso interno)
@@ -118,7 +134,12 @@ Vagrant.configure("2") do |config|
       SHELL
 
       lan.vm.provision "shell", path: "mysql_config.sh"
-      lan.vm.provision "shell", path: "lan.sh"
+      if DUAL_FIREWALL == 1
+        lan.vm.provision "shell", path: "lan.sh"
+      else
+        lan.vm.provision "shell", path: "DMZ1/lan_simple.sh"
+      end
+
     end
 
 
@@ -145,7 +166,12 @@ Vagrant.configure("2") do |config|
         SHELL
 
         lan.vm.provision "shell", path: "mysql_config.sh"
-        lan.vm.provision "shell", path: "lan.sh"
+        if DUAL_FIREWALL == 1
+          lan.vm.provision "shell", path: "lan.sh"
+        else
+          lan.vm.provision "shell", path: "DMZ1/lan_simple.sh"
+        end
+
       end
 
     end
@@ -154,7 +180,11 @@ Vagrant.configure("2") do |config|
       config.vm.define "lanB" do |lanB|
         lanB.vm.box = BOX_IMAGE
         lanB.vm.network "private_network", type: "static", ip: "10.10.10.130" # LAN B
-        lanB.vm.provision "shell", path: "lanb.sh"
+        if DUAL_FIREWALL == 1
+          lanB.vm.provision "shell", path: "lan.sh"
+        else
+          lanB.vm.provision "shell", path: "DMZ1/lan_simple.sh"
+        end
       end
     end
     

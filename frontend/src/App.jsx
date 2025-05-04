@@ -45,23 +45,72 @@ function App() {
               value={dmz_type}
               onChange={(e) => setDmz_type(e.target.value)}
             >
-              <option value="simple">Simple</option>
-              <option value="dual">Dual firewall</option>
+              <option value="0">Simple</option>
+              <option value="1">Dual firewall</option>
             </select>
           </label>
           <button onClick={vagrant_up}>Create</button>
+          <button onClick={vagrant_destroy}>Destroy All</button>
         </div>
       </>
     )
   }
 
+  function sendParameters() {
+    // Send the parameters to the backend
+    // You can use fetch to call your backend API
+    fetch('/sendParameters', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        node_count_lan,
+        node_count_dmz,
+        lan_subnet,
+        dmz_type,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log('Response:', data)
+      })
+      .catch((error) => {
+        console.error('Error:', error)
+      })
+  }
+
   function vagrant_up() {
     // Call the vagrant up command here
     // You can use fetch to call your backend API that runs the command
-    fetch('/vagrantUp')
+    fetch('/vagrantUp', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        node_count_lan: Number(node_count_lan),
+        node_count_dmz: Number(node_count_dmz),
+        lan_subnet: Number(lan_subnet),
+        dual_firewall: Number(dmz_type),
+      }),
+    })
       .then((response) => response.json())
       .then((data) => {
         console.log('Vagrant up response:', data)
+      })
+      .catch((error) => {
+        console.error('Error:', error)
+      })
+  }
+
+  function vagrant_destroy() {
+    // Call the vagrant destroy command here
+    // You can use fetch to call your backend API that runs the command
+    fetch('/vagrantDestroy')
+      .then((response) => response.json())
+      .then((data) => {
+        console.log('Vagrant destroy response:', data)
       })
       .catch((error) => {
         console.error('Error:', error)
