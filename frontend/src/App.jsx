@@ -11,69 +11,60 @@ function App() {
   const [dmz_type, setDmz_type] = useState(0)
 
   function cluster_selection() {
+    
     return (
       <>
-        <div>
-          <h1>Cluster Selection</h1>
-          <label>
-            Number of nodes in LAN:
-            <input
-              type="number"
-              value={node_count_lan}
-              onChange={(e) => setNode_count_lan(e.target.value)}
-            />
-          </label>
-          <label>
-            Number of nodes in DMZ:
-            <input
-              type="number"
-              value={node_count_dmz}
-              onChange={(e) => setNode_count_dmz(e.target.value)}
-            />
-          </label>
-          <label>
-            LAN Subnet:
-            <input
-              type="text"
-              value={lan_subnet}
-              onChange={(e) => setLan_subnet(e.target.value)}
-            />
-          </label>
-          <label>
-            DMZ Type:
-            <select
-              value={dmz_type}
-              onChange={(e) => setDmz_type(e.target.value)}
-            >
-              <option value="0">Simple</option>
-              <option value="1">Dual firewall</option>
-            </select>
-          </label>
-          <button onClick={vagrant_up}>Create</button>
-          <button onClick={vagrant_destroy}>Destroy All</button>
-        </div>
+      <div>
+        <h1>Cluster Selection</h1>
+        <label>
+        Number of nodes in LAN:
+        <input
+          type="number"
+          value={node_count_lan}
+          onChange={(e) => setNode_count_lan(e.target.value)}
+        />
+        </label>
+        <label>
+        Number of nodes in DMZ:
+        <input
+          type="number"
+          value={node_count_dmz}
+          onChange={(e) => setNode_count_dmz(e.target.value)}
+        />
+        </label>
+        <label>
+        LAN Subnet:
+        <input
+          type="checkbox"
+          checked={lan_subnet === 1}
+          onChange={(e) => setLan_subnet(e.target.checked ? 1 : 0)}
+        />
+        </label>
+        <label>
+        DMZ Type:
+        <select
+          value={dmz_type}
+          onChange={(e) => setDmz_type(e.target.value)}
+        >
+          <option value="0">Simple</option>
+          <option value="1">Dual firewall</option>
+        </select>
+        </label>
+        <button onClick={vagrant_up}>Create</button>
+        <button onClick={cancel_vagrant_up}>Cancel</button>
+        <button onClick={vagrant_destroy}>Destroy All</button>
+      </div>
       </>
     )
   }
 
-  function sendParameters() {
-    // Send the parameters to the backend
-    // You can use fetch to call your backend API
-    fetch('/sendParameters', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        node_count_lan,
-        node_count_dmz,
-        lan_subnet,
-        dmz_type,
-      }),
-    })
+  function vm_status() {
+    // Call the vagrant status command here
+    // You can use fetch to call your backend API that runs the command
+    fetch('/vmList')
       .then((response) => response.json())
       .then((data) => {
-        console.log('Response:', data)
+        console.log('VM List response:', data)
       })
       .catch((error) => {
         console.error('Error:', error)
@@ -101,7 +92,21 @@ function App() {
       })
       .catch((error) => {
         console.error('Error:', error)
+      }).then(() => {
+        vm_status()
       })
+  }
+
+  function cancel_vagrant_up() {
+    fetch('/cancelVagrantUp')
+      .then((response) => response.json())
+      .then((data) => {
+        console.log('Cancel Vagrant up response:', data)
+      })
+      .catch((error) => {
+        console.error('Error:', error)
+      })
+
   }
 
   function vagrant_destroy() {

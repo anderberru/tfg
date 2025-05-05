@@ -33,7 +33,7 @@ Vagrant.configure("2") do |config|
         if default_iface.empty?
           raise "No se pudo detectar la interfaz de red en Linux"
         else
-          puts "Usando interfaz en Linux: #{default_iface}"
+          #puts "Usando interfaz en Linux: #{default_iface}"
         end
 
       # En lugar de usar directamente default_iface, listá interfaces reales
@@ -46,15 +46,15 @@ Vagrant.configure("2") do |config|
           nic_names << nic.NetConnectionID
         end
 
-        puts "Adaptadores detectados con conexión activa:"
-        nic_names.each_with_index do |name, i|
-          puts "#{i + 1}) #{name}"
-        end
+        #puts "Adaptadores detectados con conexión activa:"
+        #nic_names.each_with_index do |name, i|
+          #puts "#{i + 1}) #{name}"
+       # end
 
         default_iface = nic_names.find { |n| n&.downcase&.include?("wi-fi") } || nic_names.first
         raise "No se pudo detectar interfaz de red conectada" if default_iface.nil?
 
-        puts "Usando interfaz detectada: #{default_iface}"
+       # puts "Usando interfaz detectada: #{default_iface}"
       else
         raise "Sistema operativo no soportado para detección automática de interfaz"
       end
