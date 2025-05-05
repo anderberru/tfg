@@ -50,9 +50,13 @@ function App() {
           <option value="1">Dual firewall</option>
         </select>
         </label>
-        <button onClick={vagrant_up}>Create</button>
-        <button onClick={cancel_vagrant_up}>Cancel</button>
-        <button onClick={vagrant_destroy}>Destroy All</button>
+        <br />
+        <div id="buttons">
+          <button onClick={vagrant_up}>Create</button>
+          <button onClick={cancel_vagrant_up}>Cancel</button>
+          <button onClick={vagrant_destroy}>Destroy All</button>
+        </div>
+        
       </div>
       </>
     )

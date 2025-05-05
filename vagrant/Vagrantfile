@@ -63,7 +63,7 @@ Vagrant.configure("2") do |config|
       config.vm.network "public_network", bridge: default_iface
       
       if DUAL_FIREWALL == 1
-        fw1.vm.provision "shell", path: "firewall1.sh"
+        fw1.vm.provision "shell", path: "scripts/firewall1.sh"
       else
         fw1.vm.provision "shell", path: "DMZ1/firewall_simple.sh"
       end
@@ -76,7 +76,7 @@ Vagrant.configure("2") do |config|
         fw2.vm.network "private_network", type: "static", ip: "10.10.20.4" # Red DMZ
         fw2.vm.network "private_network", type: "static", ip: "10.10.30.2" # firewall1
   
-        fw2.vm.provision "shell", path: "firewall2.sh"
+        fw2.vm.provision "shell", path: "scripts/firewall2.sh"
       end
     end
     
@@ -104,11 +104,11 @@ Vagrant.configure("2") do |config|
         done
       SHELL
 
-      dmz.vm.provision "shell", path: "lucid_install.sh", privileged: false
-      dmz.vm.provision "shell", path: "mysql_config.sh"
-      dmz.vm.provision "shell", path: "tomcat.sh", privileged: false
+      dmz.vm.provision "shell", path: "scripts/lucid_install.sh", privileged: false
+      dmz.vm.provision "shell", path: "scripts/mysql_config.sh"
+      dmz.vm.provision "shell", path: "scripts/tomcat.sh", privileged: false
       if DUAL_FIREWALL == 1
-        dmz.vm.provision "shell", path: "dmz.sh"
+        dmz.vm.provision "shell", path: "scripts/dmz.sh"
       else
         dmz.vm.provision "shell", path: "DMZ1/dmz_simple.sh"
       end
@@ -128,14 +128,14 @@ Vagrant.configure("2") do |config|
         until mysqladmin ping --silent; do
           sleep 1
         done
-        cp /vagrant/mysql.sql /tmp/mysql.sql
+        cp /vagrant/scripts/mysql.sql /tmp/mysql.sql
         mysql < /tmp/mysql.sql
         #mysql -u struts -p'password' -e "CREATE DATABASE struts;"
       SHELL
 
-      lan.vm.provision "shell", path: "mysql_config.sh"
+      lan.vm.provision "shell", path: "scripts/mysql_config.sh"
       if DUAL_FIREWALL == 1
-        lan.vm.provision "shell", path: "lan.sh"
+        lan.vm.provision "shell", path: "scripts/lan.sh"
       else
         lan.vm.provision "shell", path: "DMZ1/lan_simple.sh"
       end
@@ -157,7 +157,7 @@ Vagrant.configure("2") do |config|
           until mysqladmin ping --silent; do
             sleep 1
           done
-          cp /vagrant/mysql.sql /tmp/mysql.sql
+          cp /vagrant/scripts/mysql.sql /tmp/mysql.sql
           mysql < /tmp/mysql.sql
           #mysql -u struts -p'password' -e "CREATE DATABASE struts;"
           ip route del default via 10.0.2.2
@@ -165,9 +165,9 @@ Vagrant.configure("2") do |config|
           ip route add default via 10.10.10.4
         SHELL
 
-        lan.vm.provision "shell", path: "mysql_config.sh"
+        lan.vm.provision "shell", path: "scripts/mysql_config.sh"
         if DUAL_FIREWALL == 1
-          lan.vm.provision "shell", path: "lan.sh"
+          lan.vm.provision "shell", path: "scripts/lan.sh"
         else
           lan.vm.provision "shell", path: "DMZ1/lan_simple.sh"
         end
@@ -181,7 +181,7 @@ Vagrant.configure("2") do |config|
         lanB.vm.box = BOX_IMAGE
         lanB.vm.network "private_network", type: "static", ip: "10.10.10.130" # LAN B
         if DUAL_FIREWALL == 1
-          lanB.vm.provision "shell", path: "lan.sh"
+          lanB.vm.provision "shell", path: "scripts/lan.sh"
         else
           lanB.vm.provision "shell", path: "DMZ1/lan_simple.sh"
         end
