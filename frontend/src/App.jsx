@@ -9,6 +9,9 @@ function App() {
   const [node_count_dmz, setNode_count_dmz] = useState(0)
   const [lan_subnet, setLan_subnet] = useState(0)
   const [dmz_type, setDmz_type] = useState(0)
+  const [vm_list, setVm_list] = useState([])
+  const [vm_status_list, setVm_status_list] = useState([])
+  const [app_state, setApp_state] = useState("not created")
 
   function cluster_selection() {
     
@@ -50,16 +53,45 @@ function App() {
           <option value="1">Dual firewall</option>
         </select>
         </label>
-        <br />
-        <div id="buttons">
-          <button onClick={vagrant_up}>Create</button>
-          <button onClick={cancel_vagrant_up}>Cancel</button>
-          <button onClick={vagrant_destroy}>Destroy All</button>
-        </div>
-        
+        <br /><br />
+        {buttons()}
       </div>
       </>
     )
+  }
+
+  function buttons() {
+    if (app_state === "not created") {
+      return (
+        <div id="buttons">
+          <button onClick={vagrant_up}>Create</button>
+        </div>
+      )
+    } else if (app_state === "creating") {
+      return (
+        <div id="buttons">
+          <button disabled onClick={vagrant_up}>Creating</button>
+          <button onClick={cancel_vagrant_up}>Cancel</button>
+          <button onClick={vagrant_destroy}>Destroy All</button>
+        </div>
+      )
+    } else if (app_state === "created") {
+      return (
+        <div id="buttons">
+          <button disabled onClick={vagrant_up}>Running</button>
+          <button onClick={vagrant_halt}>Stop All</button>
+          <button onClick={vagrant_destroy}>Destroy All</button>
+        </div>
+      )
+    } else if (app_state === "stopped") {
+      return (
+        <div id="buttons">
+          <button onClick={vagrant_up}>Initialize</button>
+          <button onClick={cancel_vagrant_up}>Cancel</button>
+          <button onClick={vagrant_destroy}>Destroy All</button>
+        </div>
+      )
+    }
   }
 
   function vm_status() {
@@ -78,6 +110,9 @@ function App() {
   function vagrant_up() {
     // Call the vagrant up command here
     // You can use fetch to call your backend API that runs the command
+    if (app_state === "not created") {
+      setApp_state("creating")
+    }
     fetch('/vagrantUp', {
       method: 'POST',
       headers: {
@@ -93,6 +128,7 @@ function App() {
       .then((response) => response.json())
       .then((data) => {
         console.log('Vagrant up response:', data)
+        setApp_state("created")
       })
       .catch((error) => {
         console.error('Error:', error)
@@ -102,6 +138,7 @@ function App() {
   }
 
   function cancel_vagrant_up() {
+    
     fetch('/cancelVagrantUp')
       .then((response) => response.json())
       .then((data) => {
@@ -113,13 +150,20 @@ function App() {
 
   }
 
+  function vagrant_halt() {
+
+
+  }
+
   function vagrant_destroy() {
     // Call the vagrant destroy command here
     // You can use fetch to call your backend API that runs the command
+    
     fetch('/vagrantDestroy')
       .then((response) => response.json())
       .then((data) => {
         console.log('Vagrant destroy response:', data)
+        setApp_state("not created")
       })
       .catch((error) => {
         console.error('Error:', error)
