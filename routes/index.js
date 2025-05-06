@@ -143,4 +143,30 @@ router.get('/vagrantDestroy', function(req, res, next) {
 
 });
 
+router.get('/vagrantHalt', function(req, res, next) {
+  console.log('vagrantHalt endpoint hit');
+  
+  const command = spawn('vagrant', ['halt'], { cwd: vagrantPath });
+
+  let output = '';
+
+  command.stdout.on('data', (data) => {
+    line = data.toString();
+    output += line; // acumulamos la salida
+    console.log(`${line.trim()}`);
+  });
+
+  command.stderr.on('data', (data) => {
+    console.error(`stderr: ${data}`);
+  });
+
+  command.on('close', (code) => {
+    const lines = output.trim().split('\n');
+    //console.log('Lista de archivos:', lines);
+    console.log('Proceso vagrant halt terminado');
+    res.json({ message: 'Cluster stopped' });
+  });
+
+});
+
 module.exports = router;

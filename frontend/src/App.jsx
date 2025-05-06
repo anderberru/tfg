@@ -22,6 +22,7 @@ function App() {
         <label>
         Number of nodes in LAN:
         <input
+          disabled={app_state != "not created"}
           type="number"
           value={node_count_lan}
           onChange={(e) => setNode_count_lan(e.target.value)}
@@ -30,6 +31,7 @@ function App() {
         <label>
         Number of nodes in DMZ:
         <input
+          disabled={app_state != "not created"}
           type="number"
           value={node_count_dmz}
           onChange={(e) => setNode_count_dmz(e.target.value)}
@@ -38,6 +40,7 @@ function App() {
         <label>
         LAN Subnet:
         <input
+          disabled={app_state != "not created"}
           type="checkbox"
           checked={lan_subnet === 1}
           onChange={(e) => setLan_subnet(e.target.checked ? 1 : 0)}
@@ -46,6 +49,7 @@ function App() {
         <label>
         DMZ Type:
         <select
+          disabled={app_state != "not created"}
           value={dmz_type}
           onChange={(e) => setDmz_type(e.target.value)}
         >
@@ -70,9 +74,8 @@ function App() {
     } else if (app_state === "creating") {
       return (
         <div id="buttons">
-          <button disabled onClick={vagrant_up}>Creating</button>
+          <button disabled onClick={vagrant_up}>Creating...</button>
           <button onClick={cancel_vagrant_up}>Cancel</button>
-          <button onClick={vagrant_destroy}>Destroy All</button>
         </div>
       )
     } else if (app_state === "created") {
@@ -87,8 +90,27 @@ function App() {
       return (
         <div id="buttons">
           <button onClick={vagrant_up}>Initialize</button>
-          <button onClick={cancel_vagrant_up}>Cancel</button>
           <button onClick={vagrant_destroy}>Destroy All</button>
+        </div>
+      )
+    } else if (app_state === "initializing") {
+      return (
+        <div id="buttons">
+          <button disabled onClick={vagrant_up}>Initializing...</button>
+          <button onClick={cancel_vagrant_up}>Cancel</button>
+        </div>
+      )
+    }
+    else if (app_state === "stopping") {
+      return (
+        <div id="buttons">
+          <button disabled onClick={vagrant_halt}>Stopping...</button>
+        </div>
+      )
+    } else if (app_state === "destroying") {
+      return (
+        <div id="buttons">
+          <button disabled onClick={vagrant_destroy}>Destroying...</button>
         </div>
       )
     }
@@ -112,6 +134,8 @@ function App() {
     // You can use fetch to call your backend API that runs the command
     if (app_state === "not created") {
       setApp_state("creating")
+    } else if (app_state === "stopped") {
+      setApp_state("initializing")
     }
     fetch('/vagrantUp', {
       method: 'POST',
@@ -151,14 +175,26 @@ function App() {
   }
 
   function vagrant_halt() {
-
+    setApp_state("stopping")
+    fetch('/vagrantHalt')
+      .then((response) => response.json())
+      .then((data) => {
+        console.log('Vagrant halt response:', data)
+        setApp_state("stopped")
+      })
+      .catch((error) => {
+        console.error('Error:', error)
+      }).then(() => {
+        vm_status()
+        setApp_state("stopped")
+      })
 
   }
 
   function vagrant_destroy() {
     // Call the vagrant destroy command here
     // You can use fetch to call your backend API that runs the command
-    
+    setApp_state("destroying")
     fetch('/vagrantDestroy')
       .then((response) => response.json())
       .then((data) => {
@@ -199,9 +235,7 @@ function App() {
 
   return (
     <>
-      {
-      cluster_selection()
-      }
+      {cluster_selection()}
     </>
   )
 }
