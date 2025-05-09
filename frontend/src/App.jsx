@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
+import VMachine from './VMachine'
 
 function App() {
   const [count, setCount] = useState(0)
@@ -14,11 +15,14 @@ function App() {
   const [app_state, setApp_state] = useState("not created")
 
   function cluster_selection() {
+    vm_status();
     
     return (
       <>
       <div>
         <h1>Cluster Selection</h1>
+        <p>Current state: {app_state}</p>
+        {render_vm_list()}
         <label>
         Number of nodes in LAN:
         <input
@@ -84,7 +88,6 @@ function App() {
           <button disabled onClick={vagrant_up}>Running</button>
           <button onClick={vagrant_halt}>Stop All</button>
           <button onClick={vagrant_destroy}>Destroy All</button>
-          <button onClick={open_vm_console}>Open Console</button>
         </div>
       )
     } else if (app_state === "stopped") {
@@ -117,6 +120,30 @@ function App() {
     }
   }
 
+  function v_box(name, state, isFirewall) {
+    return (
+      <div className="v-box">
+        <h2>{name}</h2>
+        <p>State: {state}</p>
+        <p>Is Firewall: {isFirewall ? "Yes" : "No"}</p>
+        {/*<button disabled={state != "running"} onClick={open_vm_console(name)}>Open Console</button>*/}
+      </div>
+    )
+
+  }
+
+  function render_vm_list() {
+    return (
+      <div className="vm-list">
+        {vm_list.map((vm) => (
+          <div key={vm.name}>
+            {v_box(vm.name, vm.state, vm.isFirewall)}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   function vm_status() {
     // Call the vagrant status command here
     // You can use fetch to call your backend API that runs the command
@@ -124,17 +151,35 @@ function App() {
       .then((response) => response.json())
       .then((data) => {
         console.log('VM List response:', data)
+        console.log('VM List:', data.list)
+        const vmList = data.list.map((vm) => {
+          const vmName = vm.name
+          const vmState = vm.status
+          const isFirewall = (vmName === "firewall" || vmName === "firewall2")
+  
+          return new VMachine(vmName, vmState, isFirewall)
+        })
+        setVm_list(vmList)
+        //setVm_status_list(data)
+        console.log('VM List mapped:', vmList)
       })
       .catch((error) => {
-        console.error('Error:', error)
+        console.error('Error status:', error)
       })
   }
 
-  function open_vm_console() {
+  function open_vm_console(m_name) {
     // Call the vagrant ssh command here
     // You can use fetch to call your backend API that runs the command
-    fetch('/vagrantSsh')
-      .then((response) => response.json())
+    fetch('/vagrantSsh', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        vm_name: m_name, // Replace with the actual VM name
+      }),
+    }).then((response) => response.json())
       .then((data) => {
         console.log('Open VM Console response:', data)
       })

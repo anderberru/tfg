@@ -25,8 +25,9 @@ router.get('/', function(req, res, next) {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'dist', 'index.html'));
 });
 
-router.get('/vagrantSsh', function(req, res, next) {
-  exec(`start cmd /k "cd /d ${vagrantPath} && vagrant ssh firewall1"`, (err) => {
+router.post('/vagrantSsh', function(req, res, next) {
+
+  exec(`start cmd /k "cd /d ${vagrantPath} && vagrant ssh ${req.body.vm_name}"`, (err) => {
     if (err) console.error('Error:', err);
     else {
       console.log('CMD abierta y ejecutando el comando');
@@ -95,7 +96,7 @@ router.get('/vmList', function(req, res, next) {
     console.log('Proceso vagrant status terminado');
     const vmjson = vmList_to_json(lines);
     
-    res.json({ message: 'Proceso vagrant status terminado' });
+    res.json({ list: vmjson });
   });
 });
 
