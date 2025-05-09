@@ -25,10 +25,27 @@ router.get('/', function(req, res, next) {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'dist', 'index.html'));
 });
 
+router.get('/vagrantSsh', function(req, res, next) {
+  exec(`start cmd /k "cd /d ${vagrantPath} && vagrant ssh firewall1"`, (err) => {
+    if (err) console.error('Error:', err);
+    else {
+      console.log('CMD abierta y ejecutando el comando');
+      res.json({ message: 'SSH command executed' });
+    }
+  });
+
+});
+
 router.post('/vagrantUp', function(req, res, next) {
   console.log('vagrantUp endpoint hit');
   writeJsonFile(path.join(vagrantPath, 'parameters.json'), req.body);
   //console.log('Vagrant path:', vagrantPath);
+  /*
+  exec(`start cmd /k "cd /d ${vagrantPath} && vagrant status"`, (err) => {
+    if (err) console.error('Error:', err);
+    else console.log('CMD abierta y ejecutando el comando');
+  });
+  */
   
   vagrantUp = spawn('vagrant', ['up'], { cwd: vagrantPath });
 

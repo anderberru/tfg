@@ -84,6 +84,7 @@ function App() {
           <button disabled onClick={vagrant_up}>Running</button>
           <button onClick={vagrant_halt}>Stop All</button>
           <button onClick={vagrant_destroy}>Destroy All</button>
+          <button onClick={open_vm_console}>Open Console</button>
         </div>
       )
     } else if (app_state === "stopped") {
@@ -123,6 +124,19 @@ function App() {
       .then((response) => response.json())
       .then((data) => {
         console.log('VM List response:', data)
+      })
+      .catch((error) => {
+        console.error('Error:', error)
+      })
+  }
+
+  function open_vm_console() {
+    // Call the vagrant ssh command here
+    // You can use fetch to call your backend API that runs the command
+    fetch('/vagrantSsh')
+      .then((response) => response.json())
+      .then((data) => {
+        console.log('Open VM Console response:', data)
       })
       .catch((error) => {
         console.error('Error:', error)

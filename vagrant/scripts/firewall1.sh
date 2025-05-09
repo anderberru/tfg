@@ -39,6 +39,28 @@ iptables -A FORWARD -s 10.10.30.0/24 -d 10.10.20.0/24 -p icmp -j ACCEPT
 # Bloquear tráfico desde DMZ a LAN
 #iptables -A FORWARD -s 10.10.20.0/24 -d 10.10.10.0/24 -j DROP
 
+# Permitir que el tráfico hacia el puerto 8080 de la DMZ pase por el firewall
+iptables -A FORWARD -p tcp -d 10.10.20.0/24 --dport 8080 -j ACCEPT
+
+# Permitir acceso desde Internet a DMZ (Ejemplo: HTTP y HTTPS)
+iptables -A FORWARD -p tcp -d 10.10.20.0/24 --dport 80 -j ACCEPT
+iptables -A FORWARD -p tcp -d 10.10.20.0/24 --dport 443 -j ACCEPT
+
+
+
+# Redirige tráfico del puerto 8080 de eth3 (host) hacia Tomcat en DMZ
+iptables -t nat -A PREROUTING -i eth3 -p tcp --dport 8080 -j DNAT --to-destination 10.10.20.10:8080
+
+# Hace que las respuestas vuelvan correctamente al host
+iptables -t nat -A POSTROUTING -o eth2 -j MASQUERADE
+
+# Acepta el tráfico en FORWARD para permitir el paso al Tomcat
+iptables -A FORWARD -i eth3 -o eth2 -p tcp --dport 8080 -d 10.10.20.10 -j ACCEPT
+
+# Permitir NAT para que la DMZ y la LAN accedan a Internet
+iptables -t nat -A POSTROUTING -o eth3 -j MASQUERADE  # eth0 es la interfaz de Internet
+
+
 # Reenviar el tráfico que llega al puerto 8080 del firewall a la IP de la DMZ
 iptables -t nat -A PREROUTING -p tcp --dport 8080 -j DNAT --to-destination 10.10.20.10:8080
 

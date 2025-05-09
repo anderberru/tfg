@@ -26,6 +26,8 @@ iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
 iptables -A INPUT -p icmp -j ACCEPT
 iptables -A OUTPUT -p icmp -j ACCEPT
 
+iptables -A INPUT -s 10.10.20.5 -p tcp --dport 8080 -j ACCEPT
+
 # Permitir acceso HTTP y HTTPS desde Internet
 iptables -A INPUT -p tcp --dport 80 -j ACCEPT
 iptables -A INPUT -p tcp --dport 443 -j ACCEPT

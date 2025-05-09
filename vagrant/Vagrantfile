@@ -19,6 +19,7 @@ Vagrant.configure("2") do |config|
     # Firewall/Gateway (conecta LAN, DMZ e Internet)
     config.vm.define "firewall1" do |fw1|
       fw1.vm.box = BOX_IMAGE
+      fw1.vm.hostname = "firewall1"
       if DUAL_FIREWALL == 1
         fw1.vm.network "private_network", type: "static", ip: "10.10.30.1" # firewall2
       else
@@ -60,7 +61,7 @@ Vagrant.configure("2") do |config|
       end
 
       # Usar la interfaz detectada en public_network
-      config.vm.network "public_network", bridge: default_iface
+      fw1.vm.network "public_network"
       
       if DUAL_FIREWALL == 1
         fw1.vm.provision "shell", path: "scripts/firewall1.sh"
@@ -72,6 +73,7 @@ Vagrant.configure("2") do |config|
     if DUAL_FIREWALL == 1
       config.vm.define "firewall2" do |fw2|
         fw2.vm.box = BOX_IMAGE
+        fw2.vm.hostname = "firewall2"
         fw2.vm.network "private_network", type: "static", ip: "10.10.10.4" # Red LAN
         fw2.vm.network "private_network", type: "static", ip: "10.10.20.4" # Red DMZ
         fw2.vm.network "private_network", type: "static", ip: "10.10.30.2" # firewall1
@@ -84,6 +86,7 @@ Vagrant.configure("2") do |config|
     # Servidor en la DMZ (accesible desde el exterior y la LAN)
     config.vm.define "dmz" do |dmz|
       dmz.vm.box = BOX_IMAGE
+      dmz.vm.hostname = "dmz"
       dmz.vm.network "private_network", type: "static", ip: "10.10.20.10" # Red DMZ
       #dmz.vm.network "public_network", bridge: "eth0" # Acceso externo (Internet)
       dmz.vm.network "forwarded_port", guest: 8080, host: 9090 # Acceso a Tomcat
@@ -118,6 +121,7 @@ Vagrant.configure("2") do |config|
     # Servidor en la LAN (solo acceso interno)
     config.vm.define "lan" do |lan|
       lan.vm.box = BOX_IMAGE
+      lan.vm.hostname = "lan"
       lan.vm.network "private_network", type: "static", ip: "10.10.10.10" # Red interna (LAN)
       
       lan.vm.provision "shell", inline: <<-SHELL
@@ -147,6 +151,7 @@ Vagrant.configure("2") do |config|
       # Servidor en la LAN (solo acceso interno)
       config.vm.define "lan#{i}" do |lan|
         lan.vm.box = BOX_IMAGE
+        lan.vm.hostname = "lan#{i}"
         lan.vm.network "private_network", type: "static", ip: "10.10.10.#{i + 10}" # Red interna (LAN)
         
         lan.vm.provision "shell", inline: <<-SHELL
@@ -160,9 +165,6 @@ Vagrant.configure("2") do |config|
           cp /vagrant/scripts/mysql.sql /tmp/mysql.sql
           mysql < /tmp/mysql.sql
           #mysql -u struts -p'password' -e "CREATE DATABASE struts;"
-          ip route del default via 10.0.2.2
-          ip route del default via 192.168.1.1
-          ip route add default via 10.10.10.4
         SHELL
 
         lan.vm.provision "shell", path: "scripts/mysql_config.sh"
@@ -179,6 +181,7 @@ Vagrant.configure("2") do |config|
     if LAN_SUBNET == 1
       config.vm.define "lanB" do |lanB|
         lanB.vm.box = BOX_IMAGE
+        lanB.vm.hostname = "lanB"
         lanB.vm.network "private_network", type: "static", ip: "10.10.10.130" # LAN B
         if DUAL_FIREWALL == 1
           lanB.vm.provision "shell", path: "scripts/lan.sh"
