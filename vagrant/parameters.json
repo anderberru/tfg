@@ -2,5 +2,5 @@
   "node_count_lan": 0,
   "node_count_dmz": 0,
   "lan_subnet": 0,
-  "dual_firewall": 1
+  "dual_firewall": 0
 }

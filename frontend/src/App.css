@@ -42,5 +42,15 @@
 }
 
 .v-box {
-  color: #00ccff;
+  background-color: 1px solid #cccccc86;
+  border: 1px solid #ccc;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.vm-list {
+  display: flex;
+  flex-wrap: wrap; /* Opcional: permite que pasen a la siguiente línea si no caben */
+  gap: 16px; /* Espacio entre las cajas */
+  justify-content: center; /* Opcional: centra horizontalmente */
 }

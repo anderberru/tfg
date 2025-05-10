@@ -1,22 +1,43 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 import VMachine from './VMachine'
 
 function App() {
+  const [pageLoaded, setPageLoaded] = useState(false)
   const [count, setCount] = useState(0)
   const [node_count_lan, setNode_count_lan] = useState(0)
   const [node_count_dmz, setNode_count_dmz] = useState(0)
   const [lan_subnet, setLan_subnet] = useState(0)
   const [dmz_type, setDmz_type] = useState(0)
   const [vm_list, setVm_list] = useState([])
-  const [vm_status_list, setVm_status_list] = useState([])
   const [app_state, setApp_state] = useState("not created")
 
-  function cluster_selection() {
+  useEffect(() => {
+    // Esta función se ejecuta solo una vez al cargar la página
+    console.log('Page loaded')
     vm_status();
-    
+  }, []) // <-- array vacío = solo en el primer render
+
+  function check_app_state(vmList) {
+    console.log('LSIT:', vmList)
+    const hasRunning = vmList.some(vm => vm.state === 'running');
+    const hasPoweroff = vmList.some(vm => vm.state === 'poweroff');
+
+    if (hasRunning) {
+      console.log('There are VMs in the "running" state.');
+      return 'created';
+    } else if (hasPoweroff) {
+      console.log('There are VMs in the "poweroff" state.');
+      return 'stopped';
+    } else {
+      console.log('There are no VMs in the "running" or "poweroff" state.');
+      return 'not created';
+    }
+  }
+
+  function cluster_selection() {
     return (
       <>
       <div>
@@ -126,7 +147,7 @@ function App() {
         <h2>{name}</h2>
         <p>State: {state}</p>
         <p>Is Firewall: {isFirewall ? "Yes" : "No"}</p>
-        {/*<button disabled={state != "running"} onClick={open_vm_console(name)}>Open Console</button>*/}
+        <button disabled={state != "running"} onClick={() => open_vm_console(name)}>Open Console</button>
       </div>
     )
 
@@ -144,6 +165,17 @@ function App() {
     )
   }
 
+  function set_vm_list_state(state) {
+    const vmList = vm_list.map((vm) => {
+          const vmName = vm.name
+          const vmState = state
+          const isFirewall = (vmName === "firewall1" || vmName === "firewall2")
+  
+          return new VMachine(vmName, vmState, isFirewall)
+        })
+        setVm_list(vmList)
+  }
+
   function vm_status() {
     // Call the vagrant status command here
     // You can use fetch to call your backend API that runs the command
@@ -155,12 +187,16 @@ function App() {
         const vmList = data.list.map((vm) => {
           const vmName = vm.name
           const vmState = vm.status
-          const isFirewall = (vmName === "firewall" || vmName === "firewall2")
+          const isFirewall = (vmName === "firewall1" || vmName === "firewall2")
   
           return new VMachine(vmName, vmState, isFirewall)
         })
+        if (!pageLoaded) {
+          setApp_state(check_app_state(vmList));
+          setPageLoaded(true);
+        }
+        console.log('App state:', app_state);
         setVm_list(vmList)
-        //setVm_status_list(data)
         console.log('VM List mapped:', vmList)
       })
       .catch((error) => {
@@ -212,11 +248,10 @@ function App() {
       .then((data) => {
         console.log('Vagrant up response:', data)
         setApp_state("created")
+        set_vm_list_state('running')
       })
       .catch((error) => {
         console.error('Error:', error)
-      }).then(() => {
-        vm_status()
       })
   }
 
@@ -239,13 +274,12 @@ function App() {
       .then((response) => response.json())
       .then((data) => {
         console.log('Vagrant halt response:', data)
+        //vm_status()
+        set_vm_list_state('poweroff')
         setApp_state("stopped")
       })
       .catch((error) => {
         console.error('Error:', error)
-      }).then(() => {
-        vm_status()
-        setApp_state("stopped")
       })
 
   }
@@ -259,6 +293,7 @@ function App() {
       .then((data) => {
         console.log('Vagrant destroy response:', data)
         setApp_state("not created")
+        set_vm_list_state('not created')
       })
       .catch((error) => {
         console.error('Error:', error)
@@ -292,11 +327,21 @@ function App() {
     )
   }
 
-  return (
+  if (!pageLoaded) {
+    return (
+      <>
+        <div>
+          <h1>Loading...</h1>
+        </div>
+      </>
+    )
+  } else {
+    return (
     <>
       {cluster_selection()}
     </>
-  )
+    )
+  }
 }
 
 export default App
