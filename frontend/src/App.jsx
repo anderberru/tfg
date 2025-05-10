@@ -17,8 +17,36 @@ function App() {
   useEffect(() => {
     // Esta función se ejecuta solo una vez al cargar la página
     console.log('Page loaded')
-    vm_status();
+    read_parameters()
+      .then((data) => {
+        console.log('Read parameters:', data)
+        setNode_count_lan(data.node_count_lan)
+        setNode_count_dmz(data.node_count_dmz)
+        setLan_subnet(data.lan_subnet)
+        setDmz_type(data.dual_firewall)
+      }).then(() => {vm_status();})
+      .catch(error => console.error("Error:", error));
+    
   }, []) // <-- array vacío = solo en el primer render
+
+    // Este effect se ejecutará cada vez que cambie dmz_type
+  useEffect(() => {
+  if (!pageLoaded) return;
+
+  const updateBackend = async () => {
+    try {
+      setPageLoaded(false);
+      save_parameters()
+      .then(() => vm_status())
+      .catch(error => console.error("Error:", error));
+    } catch (error) {
+      console.error("Error actualizando parámetros:", error);
+    }
+  };
+
+  updateBackend();
+  }, [dmz_type]);
+
 
   function check_app_state(vmList) {
     console.log('LSIT:', vmList)
@@ -41,49 +69,59 @@ function App() {
     return (
       <>
       <div>
-        <h1>Cluster Selection</h1>
-        <p>Current state: {app_state}</p>
-        {render_vm_list()}
-        <label>
-        Number of nodes in LAN:
-        <input
-          disabled={app_state != "not created"}
-          type="number"
-          value={node_count_lan}
-          onChange={(e) => setNode_count_lan(e.target.value)}
-        />
-        </label>
-        <label>
-        Number of nodes in DMZ:
-        <input
-          disabled={app_state != "not created"}
-          type="number"
-          value={node_count_dmz}
-          onChange={(e) => setNode_count_dmz(e.target.value)}
-        />
-        </label>
-        <label>
-        LAN Subnet:
-        <input
-          disabled={app_state != "not created"}
-          type="checkbox"
-          checked={lan_subnet === 1}
-          onChange={(e) => setLan_subnet(e.target.checked ? 1 : 0)}
-        />
-        </label>
-        <label>
-        DMZ Type:
-        <select
-          disabled={app_state != "not created"}
-          value={dmz_type}
-          onChange={(e) => setDmz_type(e.target.value)}
-        >
-          <option value="0">Simple</option>
-          <option value="1">Dual firewall</option>
-        </select>
-        </label>
-        <br /><br />
-        {buttons()}
+      <h1>Cluster Selection</h1>
+      <p>Current state: {app_state}</p>
+      {render_vm_list()}
+      <label>
+      Number of nodes in LAN:
+      <input
+        disabled={app_state != "not created"}
+        type="number"
+        value={node_count_lan}
+        onChange={(e) => {
+        setNode_count_lan(e.target.value);
+        
+        }}
+      />
+      </label>
+      <label>
+      Number of nodes in DMZ:
+      <input
+        disabled={app_state != "not created"}
+        type="number"
+        value={node_count_dmz}
+        onChange={(e) => {
+        setNode_count_dmz(e.target.value);
+       
+        }}
+      />
+      </label>
+      <label>
+      LAN Subnet:
+      <input
+        disabled={app_state != "not created"}
+        type="checkbox"
+        checked={lan_subnet === 1}
+        onChange={(e) => {
+        setLan_subnet(e.target.checked ? 1 : 0);
+        }}
+      />
+      </label>
+      <label>
+      DMZ Type:
+      <select
+        disabled={app_state != "not created"}
+        value={dmz_type}
+        onChange={(e) => {
+        setDmz_type(e.target.value)
+        }}
+      >
+        <option value="0">Simple</option>
+        <option value="1">Dual firewall</option>
+      </select>
+      </label>
+      <br /><br />
+      {buttons()}
       </div>
       </>
     )
@@ -94,6 +132,7 @@ function App() {
       return (
         <div id="buttons">
           <button onClick={vagrant_up}>Create</button>
+          <button onClick={save_parameters}>Save config</button>
         </div>
       )
     } else if (app_state === "creating") {
@@ -125,8 +164,7 @@ function App() {
           <button onClick={cancel_vagrant_up}>Cancel</button>
         </div>
       )
-    }
-    else if (app_state === "stopping") {
+    } else if (app_state === "stopping") {
       return (
         <div id="buttons">
           <button disabled onClick={vagrant_halt}>Stopping...</button>
@@ -154,13 +192,36 @@ function App() {
   }
 
   function render_vm_list() {
+    const firewalls = vm_list.filter(vm => vm.name.includes('firewall'));
+    const lanNodes = vm_list.filter(vm => vm.name.includes('lan'));
+    const dmzNodes = vm_list.filter(vm => vm.name.includes('dmz'));
+
     return (
       <div className="vm-list">
-        {vm_list.map((vm) => (
-          <div key={vm.name}>
-            {v_box(vm.name, vm.state, vm.isFirewall)}
-          </div>
-        ))}
+        <div className="firewalls-section">
+          <h2>Firewalls</h2>
+          {firewalls.map((vm) => (
+            <div key={vm.name}>
+              {v_box(vm.name, vm.state, vm.isFirewall)}
+            </div>
+          ))}
+        </div>
+        <div className="lan-section">
+          <h2>LAN Nodes</h2>
+          {lanNodes.map((vm) => (
+            <div key={vm.name}>
+              {v_box(vm.name, vm.state, vm.isFirewall)}
+            </div>
+          ))}
+        </div>
+        <div className="dmz-section">
+          <h2>DMZ Nodes</h2>
+          {dmzNodes.map((vm) => (
+            <div key={vm.name}>
+              {v_box(vm.name, vm.state, vm.isFirewall)}
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -172,8 +233,8 @@ function App() {
           const isFirewall = (vmName === "firewall1" || vmName === "firewall2")
   
           return new VMachine(vmName, vmState, isFirewall)
-        })
-        setVm_list(vmList)
+      })
+    setVm_list(vmList)
   }
 
   function vm_status() {
@@ -193,8 +254,9 @@ function App() {
         })
         if (!pageLoaded) {
           setApp_state(check_app_state(vmList));
-          setPageLoaded(true);
+          //setPageLoaded(true);
         }
+        setPageLoaded(true);
         console.log('App state:', app_state);
         setVm_list(vmList)
         console.log('VM List mapped:', vmList)
@@ -223,6 +285,51 @@ function App() {
         console.error('Error:', error)
       })
   }
+
+  async function save_parameters() {
+    try {
+      const response = await fetch('/saveParameters', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          node_count_lan: Number(node_count_lan),
+          node_count_dmz: Number(node_count_dmz),
+          lan_subnet: Number(lan_subnet),
+          dual_firewall: Number(dmz_type),
+        }),
+      });
+
+      const data = await response.json();
+      console.log('Save parameters response:', data);
+
+      return data; // Opcional, si querés usar la respuesta más adelante
+    } catch (error) {
+      console.error('Error:', error);
+      throw error; // Muy importante: relanzar el error para que pueda capturarse si se usa `await`
+    }
+  }
+
+  async function read_parameters() {
+    try {
+      const response = await fetch('/readParameters', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      console.log('Read parameters response:', data);
+
+      return data; // Opcional, si querés usar la respuesta más adelante
+    } catch (error) {
+      console.error('Error:', error);
+      throw error; // Muy importante: relanzar el error para que pueda capturarse si se usa `await`
+    }
+  }
+
 
   function vagrant_up() {
     // Call the vagrant up command here

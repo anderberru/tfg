@@ -37,16 +37,35 @@ router.post('/vagrantSsh', function(req, res, next) {
 
 });
 
+router.post('/saveParameters', function(req, res, next) {
+  console.log('saveParameters endpoint hit');
+  writeJsonFile(path.join(vagrantPath, 'parameters.json'), req.body);
+  res.json({ message: 'Parameters saved' });
+}
+);
+
+router.get('/readParameters', function(req, res, next) {
+  console.log('getParameters endpoint hit');
+  const filePath = path.join(vagrantPath, 'parameters.json');
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Error reading file:', err);
+      res.status(500).json({ error: 'Error reading parameters' });
+    } else {
+      try {
+        const jsonData = JSON.parse(data);
+        res.json(jsonData);
+      } catch (parseErr) {
+        console.error('Error parsing JSON:', parseErr);
+        res.status(500).json({ error: 'Error parsing parameters' });
+      }
+    }
+  });
+});
+
 router.post('/vagrantUp', function(req, res, next) {
   console.log('vagrantUp endpoint hit');
   writeJsonFile(path.join(vagrantPath, 'parameters.json'), req.body);
-  //console.log('Vagrant path:', vagrantPath);
-  /*
-  exec(`start cmd /k "cd /d ${vagrantPath} && vagrant status"`, (err) => {
-    if (err) console.error('Error:', err);
-    else console.log('CMD abierta y ejecutando el comando');
-  });
-  */
   
   vagrantUp = spawn('vagrant', ['up'], { cwd: vagrantPath });
 
