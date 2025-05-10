@@ -186,9 +186,18 @@ function App() {
         <p>State: {state}</p>
         <p>Is Firewall: {isFirewall ? "Yes" : "No"}</p>
         <button disabled={state != "running"} onClick={() => open_vm_console(name)}>Open Console</button>
+        {delete_vm_button(name)}
       </div>
     )
+  }
 
+  function delete_vm_button(name) {
+    if (name === "firewall1" || name === "firewall2" || name === "lan" || name === "dmz" || name === "lanB") {
+      return;
+    }
+    return (
+      <button disabled={app_state != "not created"} onClick={() => remove_vm(name)}>Delete</button>
+    )
   }
 
   function render_vm_list() {
@@ -208,6 +217,7 @@ function App() {
         </div>
         <div className="lan-section">
           <h2>LAN Nodes</h2>
+          <button onClick={() => add_vm("lan")}>Add LAN Node</button>
           {lanNodes.map((vm) => (
             <div key={vm.name}>
               {v_box(vm.name, vm.state, vm.isFirewall)}
@@ -216,6 +226,7 @@ function App() {
         </div>
         <div className="dmz-section">
           <h2>DMZ Nodes</h2>
+          <button onClick={() => add_vm("dmz")}>Add DMZ Node</button>
           {dmzNodes.map((vm) => (
             <div key={vm.name}>
               {v_box(vm.name, vm.state, vm.isFirewall)}
@@ -264,6 +275,47 @@ function App() {
       .catch((error) => {
         console.error('Error status:', error)
       })
+  }
+
+  function add_vm(name) {
+    let count = 0
+    if (name === "lan") {
+      count = node_count_lan
+      setNode_count_lan(node_count_lan + 1)
+    } else if (name === "dmz") {
+      count = node_count_dmz
+      setNode_count_dmz(node_count_dmz + 1)
+    }
+    const newVmName = name + (count + 1).toString()
+    setVm_list((prevList) => [...prevList, new VMachine(newVmName, "not created", false)]);
+  }
+
+  function remove_vm(name) {
+    if (name.includes("lan")) {
+      setNode_count_lan(node_count_lan - 1)
+    }
+    if (name.includes("dmz")) {
+      setNode_count_dmz(node_count_dmz - 1)
+    }
+    setVm_list((prevList) => prevList.filter((vm) => vm.name !== name));
+    setVm_list((prevList) => {
+      const updatedList = prevList
+      .filter((vm) => vm.name !== name)
+      .map((vm) => {
+        if (vm.name.includes(name.slice(0, -1))) {
+        const vmNumber = parseInt(vm.name.replace(name.slice(0, -1), ""));
+        const deletedVmNumber = parseInt(name.replace(name.slice(0, -1), ""));
+        if (vmNumber > deletedVmNumber) {
+          return {
+          ...vm,
+          name: name.slice(0, -1) + (vmNumber - 1),
+          };
+        }
+        }
+        return vm;
+      });
+      return updatedList;
+    });
   }
 
   function open_vm_console(m_name) {
