@@ -14,10 +14,12 @@ function App() {
   const [dmz_type, setDmz_type] = useState(0)
   const [vm_list, setVm_list] = useState([])
   const [app_state, setApp_state] = useState("not created")
+  const [output, setOutput] = useState('')
+  const [processComplete, setProcessComplete] = useState(false)
 
   const socket = io(); // Se conecta al mismo host
 
-  function OutputConsole() {
+  function OutputConsole({ output_full, processComplete }) {
     const [output, setOutput] = useState('');
     const consoleRef = useRef(null);
 
@@ -42,12 +44,20 @@ function App() {
       return () => socket.off('vagrant-output', handleOutput);
     }, []);
 
-
-    return (
-      <pre className='console' ref={consoleRef}>
-        {output}
-      </pre>
-    );
+    if (processComplete) {
+      return (
+        <pre className='console' ref={consoleRef}>
+          {output_full}
+        </pre>
+      );
+    } else {
+      return (
+        <pre className='console' ref={consoleRef}>
+          {output}
+        </pre>
+      );
+    }
+    
   }
 
   useEffect(() => {
@@ -173,7 +183,7 @@ function App() {
       </label>
       <br /><br />
       {buttons()}
-      <OutputConsole />
+      <OutputConsole output_full={output} processComplete={processComplete} />
       </div>
       </>
     )
@@ -438,6 +448,7 @@ function App() {
   function vagrant_up() {
     // Call the vagrant up command here
     // You can use fetch to call your backend API that runs the command
+    setProcessComplete(false);
     if (app_state === "not created") {
       setApp_state("creating")
     } else if (app_state === "stopped") {
@@ -457,9 +468,11 @@ function App() {
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log('Vagrant up response:', data)
+        //console.log('Vagrant up response:', data)
         setApp_state("created")
         set_vm_list_state('running')
+        setProcessComplete(true);
+        setOutput(data.message)
       })
       .catch((error) => {
         console.error('Error:', error)
@@ -481,6 +494,7 @@ function App() {
 
   function vagrant_halt() {
     setApp_state("stopping")
+    setProcessComplete(false);
     fetch('/vagrantHalt')
       .then((response) => response.json())
       .then((data) => {
@@ -488,6 +502,8 @@ function App() {
         //vm_status()
         set_vm_list_state('poweroff')
         setApp_state("stopped")
+        setOutput(data.message)
+        setProcessComplete(true);
       })
       .catch((error) => {
         console.error('Error:', error)
@@ -499,12 +515,15 @@ function App() {
     // Call the vagrant destroy command here
     // You can use fetch to call your backend API that runs the command
     setApp_state("destroying")
+    setProcessComplete(false);
     fetch('/vagrantDestroy')
       .then((response) => response.json())
       .then((data) => {
         console.log('Vagrant destroy response:', data)
         setApp_state("not created")
         set_vm_list_state('not created')
+        setOutput(data.message)
+        setProcessComplete(true);
       })
       .catch((error) => {
         console.error('Error:', error)

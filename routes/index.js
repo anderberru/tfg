@@ -112,7 +112,7 @@ router.post('/vagrantUp', function(req, res, next) {
   writeJsonFile(path.join(vagrantPath, 'parameters.json'), req.body);
   
   vagrantUp = spawn('vagrant', ['up'], { cwd: vagrantPath });
-  io.emit('vagrant-output', 'Starting vagrant up...');
+  io.emit('vagrant-output', 'Starting vagrant up...\n');
 
   let output = '';
 
@@ -125,6 +125,7 @@ router.post('/vagrantUp', function(req, res, next) {
 
   vagrantUp.stderr.on('data', (data) => {
     console.error(`stderr: ${data}`);
+    output += 'stderr: ' + data.toString(); // acumulamos la salida
     io.emit('vagrant-output', data.toString());
   });
 
@@ -135,7 +136,7 @@ router.post('/vagrantUp', function(req, res, next) {
     console.log('Proceso vagrant up terminado');
     io.emit('vagrant-output', output);
     io.emit('process-complete', 'Vagrant up process finished');
-    res.json({ message: 'Cluster created' });
+    res.json({ message: output });
   });
 
 });
@@ -220,6 +221,7 @@ router.get('/vagrantDestroy', function(req, res, next) {
 
   command.stderr.on('data', (data) => {
     console.error(`stderr: ${data}`);
+    output += 'stderr: ' + data.toString(); // acumulamos la salida
     io.emit('vagrant-output', data.toString());
   });
 
@@ -228,7 +230,7 @@ router.get('/vagrantDestroy', function(req, res, next) {
     //console.log('Lista de archivos:', lines);
     console.log('Proceso vagrant destroy terminado');
     io.emit('process-complete', 'Vagrant destroy process finished');
-    res.json({ message: 'Everything was destroyed' });
+    res.json({ message: output });
   });
 
 });
@@ -250,6 +252,7 @@ router.get('/vagrantHalt', function(req, res, next) {
 
   command.stderr.on('data', (data) => {
     console.error(`stderr: ${data}`);
+    output += 'stderr: ' + data.toString(); // acumulamos la salida
     io.emit('vagrant-output', data.toString());
   });
 
@@ -258,7 +261,7 @@ router.get('/vagrantHalt', function(req, res, next) {
     //console.log('Lista de archivos:', lines);
     console.log('Proceso vagrant halt terminado');
     io.emit('process-complete', 'Vagrant halt process finished');
-    res.json({ message: 'Cluster stopped' });
+    res.json({ message: output });
   });
 
 });
