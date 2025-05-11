@@ -28,21 +28,36 @@ function App() {
         const el = consoleRef.current;
 
         // Guardamos si estaba al fondo antes de actualizar
-        const isNearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 10;
+        const isNearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 30;
 
         setOutput(prev => prev + data);
 
         // Esperamos al siguiente render para hacer scroll si era necesario
+        
         requestAnimationFrame(() => {
           if (isNearBottom) {
             el.scrollTop = el.scrollHeight;
           }
         });
+        
       };
 
       socket.on('vagrant-output', handleOutput);
       return () => socket.off('vagrant-output', handleOutput);
     }, []);
+     // Scroll cuando termina el proceso
+      useEffect(() => {
+        if (processComplete) {
+          const el = consoleRef.current;
+          requestAnimationFrame(() => {
+            if (el) {
+              el.scrollTop = el.scrollHeight;
+            }
+          });
+        } else {
+          setOutput(output_full);
+        }
+      }, [processComplete, output_full]);
 
     if (processComplete) {
       return (
@@ -472,7 +487,7 @@ function App() {
         setApp_state("created")
         set_vm_list_state('running')
         setProcessComplete(true);
-        setOutput(data.message)
+        setOutput((prevOutput) => prevOutput + data.message)
       })
       .catch((error) => {
         console.error('Error:', error)
@@ -502,7 +517,7 @@ function App() {
         //vm_status()
         set_vm_list_state('poweroff')
         setApp_state("stopped")
-        setOutput(data.message)
+        setOutput((prevOutput) => prevOutput + data.message)
         setProcessComplete(true);
       })
       .catch((error) => {
@@ -522,7 +537,7 @@ function App() {
         console.log('Vagrant destroy response:', data)
         setApp_state("not created")
         set_vm_list_state('not created')
-        setOutput(data.message)
+        setOutput((prevOutput) => prevOutput + data.message)
         setProcessComplete(true);
       })
       .catch((error) => {

@@ -136,6 +136,7 @@ router.post('/vagrantUp', function(req, res, next) {
     console.log('Proceso vagrant up terminado');
     io.emit('vagrant-output', output);
     io.emit('process-complete', 'Vagrant up process finished');
+    output = "VAGRANT UP PROCESS:\n" + output + "\n";
     res.json({ message: output });
   });
 
@@ -230,6 +231,7 @@ router.get('/vagrantDestroy', function(req, res, next) {
     //console.log('Lista de archivos:', lines);
     console.log('Proceso vagrant destroy terminado');
     io.emit('process-complete', 'Vagrant destroy process finished');
+    output = "VAGRANT DESTROY PROCESS:\n" + output + "\n";
     res.json({ message: output });
   });
 
@@ -261,6 +263,7 @@ router.get('/vagrantHalt', function(req, res, next) {
     //console.log('Lista de archivos:', lines);
     console.log('Proceso vagrant halt terminado');
     io.emit('process-complete', 'Vagrant halt process finished');
+    output = "VAGRANT HALT PROCESS:\n" + output + "\n";
     res.json({ message: output });
   });
 
