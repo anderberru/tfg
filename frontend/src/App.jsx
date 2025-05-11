@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
+import { io } from 'socket.io-client';
 import VMachine from './VMachine'
 
 function App() {
@@ -13,6 +14,41 @@ function App() {
   const [dmz_type, setDmz_type] = useState(0)
   const [vm_list, setVm_list] = useState([])
   const [app_state, setApp_state] = useState("not created")
+
+  const socket = io(); // Se conecta al mismo host
+
+  function OutputConsole() {
+    const [output, setOutput] = useState('');
+    const consoleRef = useRef(null);
+
+    useEffect(() => {
+      const handleOutput = (data) => {
+        const el = consoleRef.current;
+
+        // Guardamos si estaba al fondo antes de actualizar
+        const isNearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 10;
+
+        setOutput(prev => prev + data);
+
+        // Esperamos al siguiente render para hacer scroll si era necesario
+        requestAnimationFrame(() => {
+          if (isNearBottom) {
+            el.scrollTop = el.scrollHeight;
+          }
+        });
+      };
+
+      socket.on('vagrant-output', handleOutput);
+      return () => socket.off('vagrant-output', handleOutput);
+    }, []);
+
+
+    return (
+      <pre className='console' ref={consoleRef}>
+        {output}
+      </pre>
+    );
+  }
 
   useEffect(() => {
     // Esta función se ejecuta solo una vez al cargar la página
@@ -46,6 +82,21 @@ function App() {
 
   updateBackend();
   }, [dmz_type]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (app_state === "creating" || app_state === "initializing" || app_state === "stopping" || app_state === "destroying") {
+        e.preventDefault();
+        e.returnValue = ''; // Algunos navegadores lo requieren para mostrar el mensaje
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [app_state]);
 
 
   function check_app_state(vmList) {
@@ -122,6 +173,7 @@ function App() {
       </label>
       <br /><br />
       {buttons()}
+      <OutputConsole />
       </div>
       </>
     )
@@ -217,7 +269,7 @@ function App() {
         </div>
         <div className="lan-section">
           <h2>LAN Nodes</h2>
-          <button onClick={() => add_vm("lan")}>Add LAN Node</button>
+          <button disabled={app_state != "not created"} onClick={() => add_vm("lan")}>Add LAN Node</button>
           {lanNodes.map((vm) => (
             <div key={vm.name}>
               {v_box(vm.name, vm.state, vm.isFirewall)}
@@ -226,7 +278,7 @@ function App() {
         </div>
         <div className="dmz-section">
           <h2>DMZ Nodes</h2>
-          <button onClick={() => add_vm("dmz")}>Add DMZ Node</button>
+          <button disabled={app_state != "not created"} onClick={() => add_vm("dmz")}>Add DMZ Node</button>
           {dmzNodes.map((vm) => (
             <div key={vm.name}>
               {v_box(vm.name, vm.state, vm.isFirewall)}

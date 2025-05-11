@@ -4,9 +4,10 @@
  * Module dependencies.
  */
 
-var app = require('../app');
+const app = require('../app');
 var debug = require('debug')('tfg:server');
 var http = require('http');
+const socketIO = require('socket.io');
 
 /**
  * Get port from environment and store in Express.
@@ -20,6 +21,12 @@ app.set('port', port);
  */
 
 var server = http.createServer(app);
+
+// Aquí creas y usas Socket.IO sin circular dependency
+const io = socketIO(server);
+
+// Inyectas io a donde lo necesitas
+require('../routes/index').setSocket(io); // usa un setter que tú defines
 
 /**
  * Listen on provided port, on all network interfaces.

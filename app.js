@@ -5,11 +5,19 @@ var path = require('path');
 const fs = require('fs');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+/*
+const http = require('http');
+const socketIO = require('socket.io');
+*/
 
-var indexRouter = require('./routes/index');
+var { router: indexRouter } = require('./routes/index');
 var usersRouter = require('./routes/users');
 
 var app = express();
+/*
+const server = http.createServer(app); // <- importante: crear el servidor HTTP manualmente
+const io = socketIO(server); // <- socket.io lo conectamos al server
+*/
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
