@@ -1,4 +1,25 @@
 def configure_cluster(config)
+
+  # Detectar sistema operativo y obtener interfaz con salida a Internet solo una vez
+if RUBY_PLATFORM =~ /linux/
+  $default_iface = `ip route | grep default | awk '{print $5}'`.strip
+  raise "No se pudo detectar la interfaz de red en Linux" if $default_iface.empty?
+
+elsif RUBY_PLATFORM =~ /mswin|mingw|cygwin/
+  require 'win32ole'
+  nic_names = []
+  wmi = WIN32OLE.connect("winmgmts://")
+  wmi.ExecQuery("select * from Win32_NetworkAdapter where NetConnectionStatus = 2").each do |nic|
+    nic_names << nic.NetConnectionID
+  end
+  $default_iface = nic_names.find { |n| n&.downcase&.include?("wi-fi") } || nic_names.first
+  raise "No se pudo detectar interfaz de red conectada" if $default_iface.nil?
+
+else
+  raise "Sistema operativo no soportado para detección automática de interfaz"
+end
+
+
     # Firewall/Gateway (conecta LAN, DMZ e Internet)
     config.vm.define "firewall1" do |fw1|
       fw1.vm.box = $BOX_IMAGE
@@ -10,41 +31,14 @@ def configure_cluster(config)
       end
       fw1.vm.network "private_network", type: "static", ip: "10.10.20.5" # Red DMZ
       
-      # Detectar sistema operativo y obtener interfaz con salida a Internet
-      if RUBY_PLATFORM =~ /linux/
-        # Linux: usar 'ip route'
-        default_iface = `ip route | grep default | awk '{print $5}'`.strip
-        if default_iface.empty?
-          raise "No se pudo detectar la interfaz de red en Linux"
-        else
-          #puts "Usando interfaz en Linux: #{default_iface}"
-        end
-
-      # En lugar de usar directamente default_iface, listá interfaces reales
-      elsif RUBY_PLATFORM =~ /mswin|mingw|cygwin/
-        require 'win32ole'
-        # Buscar todos los adaptadores de red conectados
-        nic_names = []
-        wmi = WIN32OLE.connect("winmgmts://")
-        wmi.ExecQuery("select * from Win32_NetworkAdapter where NetConnectionStatus = 2").each do |nic|
-          nic_names << nic.NetConnectionID
-        end
-
-        #puts "Adaptadores detectados con conexión activa:"
-        #nic_names.each_with_index do |name, i|
-          #puts "#{i + 1}) #{name}"
-       # end
-
-        default_iface = nic_names.find { |n| n&.downcase&.include?("wi-fi") } || nic_names.first
-        raise "No se pudo detectar interfaz de red conectada" if default_iface.nil?
-
-       # puts "Usando interfaz detectada: #{default_iface}"
-      else
-        raise "Sistema operativo no soportado para detección automática de interfaz"
-      end
+      
 
       # Usar la interfaz detectada en public_network
-      fw1.vm.network "public_network"
+      fw1.vm.network "public_network", bridge: $default_iface
+
+      if $SCRIPT_FIREWALL1 != ""
+        fw1.vm.provision "shell", path: $CUSTOM_SCRIPT_DIR+$SCRIPT_FIREWALL1, privileged: false
+      end
       
       if $DUAL_FIREWALL == 1
         fw1.vm.provision "shell", path: "scripts/firewall1.sh"
@@ -60,6 +54,10 @@ def configure_cluster(config)
         fw2.vm.network "private_network", type: "static", ip: "10.10.10.4" # Red LAN
         fw2.vm.network "private_network", type: "static", ip: "10.10.20.4" # Red DMZ
         fw2.vm.network "private_network", type: "static", ip: "10.10.30.2" # firewall1
+
+        if $SCRIPT_FIREWALL2 != ""
+          fw2.vm.provision "shell", path: $CUSTOM_SCRIPT_DIR+$SCRIPT_FIREWALL2, privileged: false
+        end
   
         fw2.vm.provision "shell", path: "scripts/firewall2.sh"
       end
@@ -70,9 +68,7 @@ def configure_cluster(config)
     config.vm.define "dmz" do |dmz|
       dmz.vm.box = $BOX_IMAGE
       dmz.vm.hostname = "dmz"
-      dmz.vm.network "private_network", type: "static", ip: "10.10.20.10" # Red DMZ
-      #dmz.vm.network "public_network", bridge: "eth0" # Acceso externo (Internet)
-      dmz.vm.network "forwarded_port", guest: 8080, host: 9090 # Acceso a Tomcat
+      dmz.vm.network "private_network", type: "static", ip: "10.10.20.10" # DMZ network
       
       dmz.vm.provision "shell", inline: <<-SHELL
         apt-get update
@@ -84,7 +80,7 @@ def configure_cluster(config)
         echo "wireshark-common wireshark-common/install-setuid boolean true" | debconf-set-selections
         DEBIAN_FRONTEND=noninteractive apt-get install -y tshark
         apt-get install -y unzip
-        # Esperar a que MySQL esté listo
+        # Wait for MySQL to be ready
         until mysqladmin ping --silent; do
           sleep 1
         done
@@ -93,6 +89,11 @@ def configure_cluster(config)
       dmz.vm.provision "shell", path: "scripts/lucid_install.sh", privileged: false
       dmz.vm.provision "shell", path: "scripts/mysql_config.sh"
       dmz.vm.provision "shell", path: "scripts/tomcat.sh", privileged: false
+
+      if !$SCRIPT_LIST_DMZ[0].to_s.strip.empty?
+        dmz.vm.provision "shell", path: $CUSTOM_SCRIPT_DIR+$SCRIPT_LIST_DMZ[0], privileged: false
+      end
+
       if $DUAL_FIREWALL == 1
         dmz.vm.provision "shell", path: "scripts/dmz.sh"
       else
@@ -121,6 +122,11 @@ def configure_cluster(config)
       SHELL
 
       lan.vm.provision "shell", path: "scripts/mysql_config.sh"
+
+      if !$SCRIPT_LIST_LAN[0].to_s.strip.empty?
+        lan.vm.provision "shell", path: $CUSTOM_SCRIPT_DIR+$SCRIPT_LIST_LAN[0], privileged: false
+      end
+
       if $DUAL_FIREWALL == 1
         lan.vm.provision "shell", path: "scripts/lan.sh"
       else
@@ -151,6 +157,11 @@ def configure_cluster(config)
         SHELL
 
         lan.vm.provision "shell", path: "scripts/mysql_config.sh"
+
+        if !$SCRIPT_LIST_LAN[i].to_s.strip.empty?
+          lan.vm.provision "shell", path: $CUSTOM_SCRIPT_DIR+$SCRIPT_LIST_LAN[i], privileged: false
+        end
+
         if $DUAL_FIREWALL == 1
           lan.vm.provision "shell", path: "scripts/lan.sh"
         else
@@ -166,6 +177,11 @@ def configure_cluster(config)
         lanB.vm.box = $BOX_IMAGE
         lanB.vm.hostname = "lanB"
         lanB.vm.network "private_network", type: "static", ip: "10.10.10.130" # LAN B
+
+        if $SCRIPT_LANB != ""
+          lanB.vm.provision "shell", path: $CUSTOM_SCRIPT_DIR+$SCRIPT_LANB, privileged: false
+        end
+
         if $DUAL_FIREWALL == 1
           lanB.vm.provision "shell", path: "scripts/lan.sh"
         else

@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 const path = require('path');
 const fs = require('fs');
+const multer = require('multer');
 const { exec, spawn } = require('child_process');
 const kill = require('tree-kill');
 //const { io } = require('../app');
@@ -14,6 +15,21 @@ function setSocket(socketIO) {
 const vagrantPath = path.join(__dirname, '..', 'vagrant');
 
 let vagrantUp = null;
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const dir = path.join(vagrantPath, 'scripts', 'custom');
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname); // Usar el nombre original
+  }
+});
+
+const upload = multer({ storage });
 
 function writeJsonFile(filePath, data) {
   fs.writeFile(filePath, JSON.stringify(data, null, 2), (err) => {
@@ -41,7 +57,6 @@ function getLinuxTerminal() {
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  //res.render('index', { title: 'Express' });
   res.sendFile(path.join(__dirname, '..', 'frontend', 'dist', 'index.html'));
 });
 
@@ -267,6 +282,18 @@ router.get('/vagrantHalt', function(req, res, next) {
     res.json({ message: output });
   });
 
+});
+
+
+router.post('/uploadFile', upload.single('file'), function (req, res) {
+  console.log('uploadFile endpoint hit');
+  console.log('Archivo recibido:', req.file);
+
+  if (!req.file) {
+    return res.status(400).json({ error: 'No se recibió ningún archivo.' });
+  }
+
+  return res.json({ message: 'File uploaded successfully' });
 });
 
 module.exports = { router, setSocket };

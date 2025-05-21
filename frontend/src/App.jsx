@@ -16,6 +16,11 @@ function App() {
   const [app_state, setApp_state] = useState("not created")
   const [output, setOutput] = useState('')
   const [processComplete, setProcessComplete] = useState(false)
+  const [script_list_lan, setScript_list_lan] = useState([])
+  const [script_list_dmz, setScript_list_dmz] = useState([])
+  const [script_firewall1, setScript_firewall1] = useState("")
+  const [script_firewall2, setScript_firewall2] = useState("")
+  const [script_lanB, setScript_lanB] = useState("")
 
   const socket = io(); // Se conecta al mismo host
 
@@ -264,6 +269,18 @@ function App() {
         <p>Is Firewall: {isFirewall ? "Yes" : "No"}</p>
         <button disabled={state != "running"} onClick={() => open_vm_console(name)}>Open Console</button>
         {delete_vm_button(name)}
+        <button
+          disabled={app_state !== "not created"}
+          onClick={() => document.getElementById(`file-upload-${name}`).click()}
+        >
+          Upload File
+        </button>
+        <input
+          id={`file-upload-${name}`}
+          type="file"
+          style={{ display: "none" }}
+          onChange={(event) => upload_file(event, name)}
+        />
       </div>
     )
   }
@@ -427,6 +444,11 @@ function App() {
           node_count_dmz: Number(node_count_dmz),
           lan_subnet: Number(lan_subnet),
           dual_firewall: Number(dmz_type),
+          script_list_lan: script_list_lan,
+          script_list_dmz: script_list_dmz,
+          script_firewall1: script_firewall1,
+          script_firewall2: script_firewall2,
+          script_lanB: script_lanB,
         }),
       });
 
@@ -459,6 +481,72 @@ function App() {
     }
   }
 
+  
+
+  function upload_file(event, vm_name) {
+    
+    const file = event.target.files[0];
+    console.log('Selected file:', file.name);
+    if (vm_name == "firewall1") {
+      setScript_firewall1(file.name)
+    } else if (vm_name == "firewall2") {
+      setScript_firewall2(file.name)
+    } else if (vm_name == "lan") {
+      setScript_list_lan((prevList) => {
+            const updatedList = [...prevList];
+            updatedList[0] = file.name;
+            return updatedList;
+      });
+    } else if (vm_name == "dmz") {
+      setScript_list_dmz((prevList) => {
+            const updatedList = [...prevList];
+            updatedList[0] = file.name;
+            return updatedList;
+          });
+    } else if (vm_name == "lanB") {
+      setScript_lanB(file.name)
+    } else if (/^(lan|dmz)\d+$/.test(vm_name)) {
+      // Para nombres como "lan1", "dmz2", etc.
+      const match = vm_name.match(/^(lan|dmz)(\d+)$/);
+      if (match) {
+        const prefix = match[1];
+        const number = match[2];
+        if (prefix === "lan") {
+          setScript_list_lan((prevList) => {
+            const updatedList = [...prevList];
+            updatedList[number] = file.name;
+            return updatedList;
+          });
+          // Aquí puedes acceder a 'number' si lo necesitas
+        } else if (prefix === "dmz") {
+          setScript_list_dmz((prevList) => {
+            const updatedList = [...prevList];
+            updatedList[number] = file.name;
+            return updatedList;
+          });
+          // Aquí puedes acceder a 'number' si lo necesitas
+        }
+      }
+    }
+
+
+    const formData = new FormData();
+    formData.append('file', file);
+    fetch('/uploadFile', {
+      method: 'POST',
+      body: formData,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log('File upload response:', data.message);
+        // Handle the response from the server
+      }
+      )
+      .catch((error) => {
+        console.error('Error:', error);
+      });
+  }
+
 
   function vagrant_up() {
     // Call the vagrant up command here
@@ -479,11 +567,15 @@ function App() {
         node_count_dmz: Number(node_count_dmz),
         lan_subnet: Number(lan_subnet),
         dual_firewall: Number(dmz_type),
+        script_list_lan: script_list_lan,
+        script_list_dmz: script_list_dmz,
+        script_firewall1: script_firewall1,
+        script_firewall2: script_firewall2,
+        script_lanB: script_lanB,
       }),
     })
       .then((response) => response.json())
       .then((data) => {
-        //console.log('Vagrant up response:', data)
         setApp_state("created")
         set_vm_list_state('running')
         setProcessComplete(true);

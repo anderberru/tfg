@@ -1,6 +1,15 @@
 {
-  "node_count_lan": 0,
+  "node_count_lan": 3,
   "node_count_dmz": 0,
   "lan_subnet": 0,
-  "dual_firewall": 0
+  "dual_firewall": 0,
+  "script_list_lan": [
+    null,
+    null,
+    "script.sh"
+  ],
+  "script_list_dmz": [],
+  "script_firewall1": "script.sh",
+  "script_firewall2": "",
+  "script_lanB": ""
 }

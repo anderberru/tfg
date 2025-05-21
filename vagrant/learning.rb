@@ -4,7 +4,7 @@ def configure_cluster(config)
         ser.vm.hostname = "server"
         ser.vm.network "private_network", type: "static", ip: "10.10.10.2"
 
-        ser.vm.provision "shell", path: "scripts/learning/flower_setup.sh", privileged: false
+        ser.vm.provision "shell", path: "scripts/learning/flower_setup.sh", args: [0], privileged: false
     end
 
     config.vm.define "client1" do |cl1|
@@ -12,7 +12,7 @@ def configure_cluster(config)
         cl1.vm.hostname = "client1"
         cl1.vm.network "private_network", type: "static", ip: "10.10.10.3"
 
-        cl1.vm.provision "shell", path: "scripts/learning/flower_setup.sh", privileged: false
+        cl1.vm.provision "shell", path: "scripts/learning/flower_setup.sh", args: [$BAD_CLIENT], privileged: false
     end
 
     config.vm.define "client2" do |cl2|
@@ -20,7 +20,7 @@ def configure_cluster(config)
         cl2.vm.hostname = "client2"
         cl2.vm.network "private_network", type: "static", ip: "10.10.10.4"
 
-        cl2.vm.provision "shell", path: "scripts/learning/flower_setup.sh", privileged: false
+        cl2.vm.provision "shell", path: "scripts/learning/flower_setup.sh", args: [0], privileged: false
     end
 
 end

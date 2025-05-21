@@ -1,6 +1,7 @@
 require 'json'
 
 $BOX_IMAGE = "bento/ubuntu-22.04"
+$CUSTOM_SCRIPT_DIR = "scripts/custom/"
 
 parameters = JSON.parse(File.read("parameters.json"))
 
@@ -8,19 +9,19 @@ $NODE_COUNT_LAN = parameters["node_count_lan"] || 0
 $LAN_SUBNET = parameters["lan_subnet"] || 0
 $NODE_COUNT_DMZ = parameters["node_count_dmz"] || 0
 $DUAL_FIREWALL = parameters["dual_firewall"] || 0
-$F_LEARNING = 1
+$F_LEARNING = 0
+$BAD_CLIENT = 0
+$SCRIPT_LIST_LAN = parameters["script_list_lan"] || ""
+$SCRIPT_LIST_DMZ = parameters["script_list_dmz"] || ""
+$SCRIPT_FIREWALL1 = parameters["script_firewall1"] || ""
+$SCRIPT_FIREWALL2 = parameters["script_firewall2"] || ""
+$SCRIPT_LANB = parameters["script_lanb"] || ""
 
 Vagrant.configure("2") do |config|
     config.vm.boot_timeout = 900
 
     config.vm.provider "virtualbox" do |vb|
         vb.gui = true
-        #vb.memory = 4096
-        #vb.cpus = 2
-        #vb.customize ["modifyvm", :id, "--cpuidset", "1", "000006f6", "00020800", "80000201", "178bfbff"]
-        #vb.customize ["modifyvm", :id, "--nested-hw-virt", "on"]
-        #vb.customize ["modifyvm", :id, "--vtxvpid", "on"]
-        #vb.customize ["modifyvm", :id, "--longmode", "on"]
     end
 
     if $F_LEARNING == 1

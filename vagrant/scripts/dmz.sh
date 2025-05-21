@@ -46,9 +46,5 @@ iptables -A INPUT -d 10.10.20.0/24 -j ACCEPT
 iptables -A OUTPUT -d 10.10.20.4 -j ACCEPT
 iptables -A INPUT -d 10.10.20.4 -j ACCEPT
 
-# Bloquear intentos de conexión hacia LAN
-#iptables -A OUTPUT -d 10.10.10.0/24 -j DROP
-#iptables -A OUTPUT -p icmp -d 10.10.10.0/24 -j DROP
-
 echo 1 > /proc/sys/net/ipv4/ip_forward
 

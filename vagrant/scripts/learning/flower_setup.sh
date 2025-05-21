@@ -18,8 +18,16 @@ source ~/py39env/bin/activate
 #echo "alias pip3=pip3.9" >> ~/.bashrc
 #echo "source ~/py39env/bin/activate" >> ~/.bashrc
 #source ~/.bashrc
-
-cp /vagrant/programs/flower.zip ~/flower.zip
+ARG1="$1"
+if [ "$ARG1" = "1" ]; then
+    echo "Argument is 1"
+    cp /vagrant/programs/flower-bad.zip ~/flower.zip
+elif [ "$ARG1" = "0" ]; then
+    echo "Argument is 0"
+    cp /vagrant/programs/flower.zip ~/flower.zip
+else
+    echo "Argument is not 1 or 0"
+fi
 unzip ~/flower.zip -d ~/
 rm ~/flower.zip
 #cd ~/flower
