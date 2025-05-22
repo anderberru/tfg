@@ -5,7 +5,8 @@
   "dual_firewall": 0,
   "script_list_lan": [
     null,
-    null,
+    "Sin tídlo.png",
+    "",
     "script.sh"
   ],
   "script_list_dmz": [],

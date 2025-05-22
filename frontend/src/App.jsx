@@ -90,7 +90,14 @@ function App() {
         setNode_count_dmz(data.node_count_dmz)
         setLan_subnet(data.lan_subnet)
         setDmz_type(data.dual_firewall)
-      }).then(() => {vm_status();})
+        setScript_list_lan(data.script_list_lan)
+        setScript_list_dmz(data.script_list_dmz)
+        console.log('FIREWALL1:  ', data.script_firewall1)
+        setScript_firewall1(data.script_firewall1)
+        setScript_firewall2(data.script_firewall2)
+        setScript_lanB(data.script_lanB)
+        return data;
+      }).then((data) => {vm_status2(data);})
       .catch(error => console.error("Error:", error));
     
   }, []) // <-- array vacío = solo en el primer render
@@ -261,7 +268,7 @@ function App() {
     }
   }
 
-  function v_box(name, state, isFirewall) {
+  function v_box(name, state, isFirewall, script) {
     return (
       <div className="v-box">
         <h2>{name}</h2>
@@ -269,18 +276,7 @@ function App() {
         <p>Is Firewall: {isFirewall ? "Yes" : "No"}</p>
         <button disabled={state != "running"} onClick={() => open_vm_console(name)}>Open Console</button>
         {delete_vm_button(name)}
-        <button
-          disabled={app_state !== "not created"}
-          onClick={() => document.getElementById(`file-upload-${name}`).click()}
-        >
-          Upload File
-        </button>
-        <input
-          id={`file-upload-${name}`}
-          type="file"
-          style={{ display: "none" }}
-          onChange={(event) => upload_file(event, name)}
-        />
+        {upload_file_button(name, script)}
       </div>
     )
   }
@@ -294,6 +290,95 @@ function App() {
     )
   }
 
+  function upload_file_button(name, script) {
+    if (script === "") {
+      return (
+        <>
+        <p>Custom script: {script}</p>
+        <button
+            disabled={app_state !== "not created"}
+            onClick={() => document.getElementById(`file-upload-${name}`).click()}
+          >
+            Upload Script
+          </button>
+          <input
+            id={`file-upload-${name}`}
+            type="file"
+            style={{ display: "none" }}
+            onChange={(event) => upload_file(event, name)}
+          />
+        </>
+      ) 
+    } else {
+        return (
+          <>
+            <p>Custom script: {script}</p>
+            <button
+                disabled={app_state !== "not created"}
+                onClick={() => document.getElementById(`file-upload-${name}`).click()}
+              >
+                Change Script
+              </button>
+              <input
+                id={`file-upload-${name}`}
+                type="file"
+                style={{ display: "none" }}
+                onChange={(event) => upload_file(event, name)}
+              />
+              <button
+                disabled={app_state !== "not created"}
+                onClick={() => remove_script(name)}
+              >
+                Delete Script
+              </button>
+            </>
+        )
+      }
+  }
+
+  function remove_script(name) {
+    set_VMachine_script(name, "")
+    if (name === "firewall1") {
+      setScript_firewall1("")
+    } else if (name === "firewall2") {
+      setScript_firewall2("")
+    } else if (name === "lan") {
+      setScript_list_lan((prevList) => {
+        const updatedList = [...prevList];
+        updatedList[0] = "";
+        return updatedList;
+      });
+    } else if (name === "dmz") {
+      setScript_list_dmz((prevList) => {
+        const updatedList = [...prevList];
+        updatedList[0] = "";
+        return updatedList;
+      });
+    } else if (name === "lanB") {
+      setScript_lanB("")
+    } else if (/^(lan|dmz)\d+$/.test(name)) {
+      // Para nombres como "lan1", "dmz2", etc.
+      const match = name.match(/^(lan|dmz)(\d+)$/);
+      if (match) {
+        const prefix = match[1];
+        const number = match[2];
+        if (prefix === "lan") {
+          setScript_list_lan((prevList) => {
+            const updatedList = [...prevList];
+            updatedList[number] = "";
+            return updatedList;
+          });
+        } else if (prefix === "dmz") {
+          setScript_list_dmz((prevList) => {
+            const updatedList = [...prevList];
+            updatedList[number] = "";
+            return updatedList;
+          });
+        }
+      }
+    }
+  }
+
   function render_vm_list() {
     const firewalls = vm_list.filter(vm => vm.name.includes('firewall'));
     const lanNodes = vm_list.filter(vm => vm.name.includes('lan'));
@@ -305,7 +390,7 @@ function App() {
           <h2>Firewalls</h2>
           {firewalls.map((vm) => (
             <div key={vm.name}>
-              {v_box(vm.name, vm.state, vm.isFirewall)}
+              {v_box(vm.name, vm.state, vm.isFirewall, vm.script)}
             </div>
           ))}
         </div>
@@ -314,7 +399,7 @@ function App() {
           <button disabled={app_state != "not created"} onClick={() => add_vm("lan")}>Add LAN Node</button>
           {lanNodes.map((vm) => (
             <div key={vm.name}>
-              {v_box(vm.name, vm.state, vm.isFirewall)}
+              {v_box(vm.name, vm.state, vm.isFirewall, vm.script)}
             </div>
           ))}
         </div>
@@ -323,10 +408,23 @@ function App() {
           <button disabled={app_state != "not created"} onClick={() => add_vm("dmz")}>Add DMZ Node</button>
           {dmzNodes.map((vm) => (
             <div key={vm.name}>
-              {v_box(vm.name, vm.state, vm.isFirewall)}
+              {v_box(vm.name, vm.state, vm.isFirewall, vm.script)}
             </div>
           ))}
         </div>
+      </div>
+    )
+  }
+
+  function render_vm_list2() {
+    return (
+      <div>
+        {vm_list.map((vm) => (
+          <>
+            <p>Name: {vm.name}</p>
+            <p>script: {vm.script}</p>
+          </>
+        ))}
       </div>
     )
   }
@@ -336,8 +434,9 @@ function App() {
           const vmName = vm.name
           const vmState = state
           const isFirewall = (vmName === "firewall1" || vmName === "firewall2")
+          const script = vm.script
   
-          return new VMachine(vmName, vmState, isFirewall)
+          return new VMachine(vmName, vmState, isFirewall, script)
       })
     setVm_list(vmList)
   }
@@ -345,17 +444,51 @@ function App() {
   function vm_status() {
     // Call the vagrant status command here
     // You can use fetch to call your backend API that runs the command
+    console.log('FIREWALLALA  ', script_firewall1)
     fetch('/vmList')
       .then((response) => response.json())
       .then((data) => {
         console.log('VM List response:', data)
         console.log('VM List:', data.list)
         const vmList = data.list.map((vm) => {
-          const vmName = vm.name
+          const vm_name = vm.name
           const vmState = vm.status
-          const isFirewall = (vmName === "firewall1" || vmName === "firewall2")
+          const isFirewall = (vm_name === "firewall1" || vm_name === "firewall2")
+          let fileName;
+          
+          if (vm_name === "firewall1") {
+            console.log('firewall1')
+            fileName = script_firewall1
+            console.log('File name:', script_firewall1)
+          } else if (vm_name === "firewall2") {
+            console.log('firewall2')
+            fileName = script_firewall2
+          } else if (vm_name === "lan") {
+            console.log('lan')
+            fileName = script_list_lan[0] || ""
+          } else if (vm_name === "dmz") {
+            console.log('dmz')
+            fileName = script_list_dmz[0] || ""
+          } else if (vm_name === "lanB") {
+            fileName = script_lanB
+          } else if (/^(lan|dmz)\d+$/.test(vm_name)) {
+              // Para nombres como "lan1", "dmz2", etc.
+              const match = vm_name.match(/^(lan|dmz)(\d+)$/);
+              if (match) {
+                const prefix = match[1];
+                const number = match[2];
+                if (prefix === "lan") {
+                  fileName = script_list_lan[number] || ""
+                  
+                } else if (prefix === "dmz") {
+                  fileName = script_list_dmz[number] || ""
+                }
+              }
+          }
+          console.log('VM name:', vm_name)
+          console.log('File name:', fileName)
   
-          return new VMachine(vmName, vmState, isFirewall)
+          return new VMachine(vm_name, vmState, isFirewall, fileName)
         })
         if (!pageLoaded) {
           setApp_state(check_app_state(vmList));
@@ -371,6 +504,71 @@ function App() {
       })
   }
 
+  function vm_status2(data_script) {
+    // Call the vagrant status command here
+    // You can use fetch to call your backend API that runs the command
+
+    console.log('FIREWALLALA  ', data_script.script_firewall1)
+    fetch('/vmList')
+      .then((response) => response.json())
+      .then((data) => {
+        console.log('VM List response:', data)
+        console.log('VM List:', data.list)
+        const vmList = data.list.map((vm) => {
+          const vm_name = vm.name
+          const vmState = vm.status
+          const isFirewall = (vm_name === "firewall1" || vm_name === "firewall2")
+          let fileName;
+          
+          if (vm_name === "firewall1") {
+            console.log('firewall1')
+            fileName = data_script.script_firewall1
+            console.log('File name:', data_script.script_firewall1)
+          } else if (vm_name === "firewall2") {
+            console.log('firewall2')
+            fileName = data_script.script_firewall2
+          } else if (vm_name === "lan") {
+            console.log('lan')
+            fileName = data_script.script_list_lan[0] || ""
+          } else if (vm_name === "dmz") {
+            console.log('dmz')
+            fileName = data_script.script_list_dmz[0] || ""
+          } else if (vm_name === "lanB") {
+            fileName = data_script.script_lanB
+          } else if (/^(lan|dmz)\d+$/.test(vm_name)) {
+              // Para nombres como "lan1", "dmz2", etc.
+              const match = vm_name.match(/^(lan|dmz)(\d+)$/);
+              if (match) {
+                const prefix = match[1];
+                const number = match[2];
+                if (prefix === "lan") {
+                  fileName = data_script.script_list_lan[number] || ""
+                  
+                } else if (prefix === "dmz") {
+                  fileName = data_script.script_list_dmz[number] || ""
+                }
+              }
+          }
+          console.log('VM name:', vm_name)
+          console.log('File name:', fileName)
+  
+          return new VMachine(vm_name, vmState, isFirewall, fileName)
+        })
+        if (!pageLoaded) {
+          setApp_state(check_app_state(vmList));
+          //setPageLoaded(true);
+        }
+        setPageLoaded(true);
+        console.log('App state:', app_state);
+        setVm_list(vmList)
+        console.log('VM List mapped:', vmList)
+      })
+      .catch((error) => {
+        console.error('Error status2:', error)
+      })
+  }
+
+
   function add_vm(name) {
     let count = 0
     if (name === "lan") {
@@ -381,7 +579,7 @@ function App() {
       setNode_count_dmz(node_count_dmz + 1)
     }
     const newVmName = name + (count + 1).toString()
-    setVm_list((prevList) => [...prevList, new VMachine(newVmName, "not created", false)]);
+    setVm_list((prevList) => [...prevList, new VMachine(newVmName, "not created", false, "")]);
   }
 
   function remove_vm(name) {
@@ -481,29 +679,42 @@ function App() {
     }
   }
 
+  function set_VMachine_script(name, script) {
+    setVm_list((prevList) => {
+      const updatedList = prevList.map((vm) => {
+        if (vm.name === name) {
+          return new VMachine(name, vm.state, vm.isFirewall, script);
+        }
+        return vm;
+      });
+      return updatedList;
+    });
+  }
   
 
   function upload_file(event, vm_name) {
     
     const file = event.target.files[0];
     console.log('Selected file:', file.name);
-    if (vm_name == "firewall1") {
+    if (vm_name === "firewall1") {
       setScript_firewall1(file.name)
-    } else if (vm_name == "firewall2") {
+      
+    } else if (vm_name === "firewall2") {
       setScript_firewall2(file.name)
-    } else if (vm_name == "lan") {
+      
+    } else if (vm_name === "lan") {
       setScript_list_lan((prevList) => {
             const updatedList = [...prevList];
             updatedList[0] = file.name;
             return updatedList;
       });
-    } else if (vm_name == "dmz") {
+    } else if (vm_name === "dmz") {
       setScript_list_dmz((prevList) => {
             const updatedList = [...prevList];
             updatedList[0] = file.name;
             return updatedList;
           });
-    } else if (vm_name == "lanB") {
+    } else if (vm_name === "lanB") {
       setScript_lanB(file.name)
     } else if (/^(lan|dmz)\d+$/.test(vm_name)) {
       // Para nombres como "lan1", "dmz2", etc.
@@ -529,6 +740,7 @@ function App() {
       }
     }
 
+    set_VMachine_script(vm_name, file.name)
 
     const formData = new FormData();
     formData.append('file', file);
@@ -664,6 +876,7 @@ function App() {
     )
   }
 
+
   if (!pageLoaded) {
     return (
       <>
@@ -675,6 +888,7 @@ function App() {
   } else {
     return (
     <>
+      {/*render_vm_list2()*/}
       {cluster_selection()}
     </>
     )
