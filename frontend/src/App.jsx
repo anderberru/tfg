@@ -10,6 +10,7 @@ function App() {
   const [count, setCount] = useState(0)
   const [node_count_lan, setNode_count_lan] = useState(0)
   const [node_count_dmz, setNode_count_dmz] = useState(0)
+  const [node_count_client, setNode_count_client] = useState(2)
   const [lan_subnet, setLan_subnet] = useState(0)
   const [dmz_type, setDmz_type] = useState(0)
   const [vm_list, setVm_list] = useState([])
@@ -21,6 +22,11 @@ function App() {
   const [script_firewall1, setScript_firewall1] = useState("")
   const [script_firewall2, setScript_firewall2] = useState("")
   const [script_lanB, setScript_lanB] = useState("")
+  const [script_list_client, setScript_list_client] = useState([])
+  const [bad_client, setBad_client] = useState([])
+  const [script_server, setScript_server] = useState("")
+  const [learning, setLearning] = useState(0)
+
 
   const socket = io(); // Se conecta al mismo host
 
@@ -96,6 +102,11 @@ function App() {
         setScript_firewall1(data.script_firewall1)
         setScript_firewall2(data.script_firewall2)
         setScript_lanB(data.script_lanB)
+        setLearning(data.learning || 0)
+        setScript_server(data.script_server || "")
+        setScript_list_client(data.script_list_client || [])
+        setBad_client(data.bad_client || [])
+        setNode_count_client(data.node_count_client || 2)
         return data;
       }).then((data) => {vm_status2(data);})
       .catch(error => console.error("Error:", error));
@@ -118,7 +129,7 @@ function App() {
   };
 
   updateBackend();
-  }, [dmz_type]);
+  }, [dmz_type, learning]);
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
@@ -160,6 +171,19 @@ function App() {
       <h1>Cluster Selection</h1>
       <p>Current state: {app_state}</p>
       {render_vm_list()}
+      <label>
+      Cluster type:
+      <select
+        disabled={app_state != "not created"}
+        value={learning}
+        onChange={(e) => {
+        setLearning(e.target.value)
+        }}
+      >
+        <option value="0">DMZ</option>
+        <option value="1">Distributed Machine Learning</option>
+      </select>
+      </label>
       <label>
       Number of nodes in LAN:
       <input
@@ -282,7 +306,7 @@ function App() {
   }
 
   function delete_vm_button(name) {
-    if (name === "firewall1" || name === "firewall2" || name === "lan" || name === "dmz" || name === "lanB") {
+    if (name === "firewall1" || name === "firewall2" || name === "lan" || name === "dmz" || name === "lanB" || name === "server" || name === "client1" || name === "client2") {
       return;
     }
     return (
@@ -356,64 +380,99 @@ function App() {
       });
     } else if (name === "lanB") {
       setScript_lanB("")
-    } else if (/^(lan|dmz)\d+$/.test(name)) {
-      // Para nombres como "lan1", "dmz2", etc.
-      const match = name.match(/^(lan|dmz)(\d+)$/);
+    } else if (/^(lan|dmz|client)\d+$/.test(name)) {
+      // Para nombres como "lan1", "dmz2", "client1", etc.
+      const match = name.match(/^(lan|dmz|client)(\d+)$/);
       if (match) {
-        const prefix = match[1];
-        const number = match[2];
-        if (prefix === "lan") {
-          setScript_list_lan((prevList) => {
-            const updatedList = [...prevList];
-            updatedList[number] = "";
-            return updatedList;
-          });
-        } else if (prefix === "dmz") {
-          setScript_list_dmz((prevList) => {
-            const updatedList = [...prevList];
-            updatedList[number] = "";
-            return updatedList;
-          });
-        }
+      const prefix = match[1];
+      const number = match[2];
+      if (prefix === "lan") {
+        setScript_list_lan((prevList) => {
+        const updatedList = [...prevList];
+        updatedList[number] = "";
+        return updatedList;
+        });
+      } else if (prefix === "dmz") {
+        setScript_list_dmz((prevList) => {
+        const updatedList = [...prevList];
+        updatedList[number] = "";
+        return updatedList;
+        });
+      } else if (prefix === "client") {
+        setScript_list_client((prevList) => {
+        const updatedList = [...prevList];
+        updatedList[number] = "";
+        return updatedList;
+        });
       }
+      }
+    } else if (name === "server") {
+      setScript_server("")
     }
   }
 
   function render_vm_list() {
-    const firewalls = vm_list.filter(vm => vm.name.includes('firewall'));
-    const lanNodes = vm_list.filter(vm => vm.name.includes('lan'));
-    const dmzNodes = vm_list.filter(vm => vm.name.includes('dmz'));
+    if (learning != 1) {
+      const firewalls = vm_list.filter(vm => vm.name.includes('firewall'));
+      const lanNodes = vm_list.filter(vm => vm.name.includes('lan'));
+      const dmzNodes = vm_list.filter(vm => vm.name.includes('dmz'));
 
-    return (
-      <div className="vm-list">
-        <div className="firewalls-section">
-          <h2>Firewalls</h2>
-          {firewalls.map((vm) => (
-            <div key={vm.name}>
-              {v_box(vm.name, vm.state, vm.isFirewall, vm.script)}
-            </div>
-          ))}
+      return (
+        <div className="vm-list">
+          <div className="firewalls-section">
+            <h2>Firewalls</h2>
+            {firewalls.map((vm) => (
+              <div key={vm.name}>
+                {v_box(vm.name, vm.state, vm.isFirewall, vm.script)}
+              </div>
+            ))}
+          </div>
+          <div className="lan-section">
+            <h2>LAN Nodes</h2>
+            <button disabled={app_state != "not created"} onClick={() => add_vm("lan")}>Add LAN Node</button>
+            {lanNodes.map((vm) => (
+              <div key={vm.name}>
+                {v_box(vm.name, vm.state, vm.isFirewall, vm.script)}
+              </div>
+            ))}
+          </div>
+          <div className="dmz-section">
+            <h2>DMZ Nodes</h2>
+            <button disabled={app_state != "not created"} onClick={() => add_vm("dmz")}>Add DMZ Node</button>
+            {dmzNodes.map((vm) => (
+              <div key={vm.name}>
+                {v_box(vm.name, vm.state, vm.isFirewall, vm.script)}
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="lan-section">
-          <h2>LAN Nodes</h2>
-          <button disabled={app_state != "not created"} onClick={() => add_vm("lan")}>Add LAN Node</button>
-          {lanNodes.map((vm) => (
-            <div key={vm.name}>
-              {v_box(vm.name, vm.state, vm.isFirewall, vm.script)}
-            </div>
-          ))}
+      )
+    } else {
+      const servers = vm_list.filter(vm => vm.name.includes('server'));
+      const clientNodes = vm_list.filter(vm => vm.name.includes('client'));
+
+      return (
+        <div className="vm-list">
+          <div className="server-section">
+            <h2>Server</h2>
+            {servers.map((vm) => (
+              <div key={vm.name}>
+                {v_box(vm.name, vm.state, vm.isFirewall, vm.script)}
+              </div>
+            ))}
+          </div>
+          <div className="client-section">
+            <h2>Client Nodes</h2>
+            <button disabled={app_state != "not created"} onClick={() => add_vm("client")}>Add Client Node</button>
+            {clientNodes.map((vm) => (
+              <div key={vm.name}>
+                {v_box(vm.name, vm.state, vm.isFirewall, vm.script)}
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="dmz-section">
-          <h2>DMZ Nodes</h2>
-          <button disabled={app_state != "not created"} onClick={() => add_vm("dmz")}>Add DMZ Node</button>
-          {dmzNodes.map((vm) => (
-            <div key={vm.name}>
-              {v_box(vm.name, vm.state, vm.isFirewall, vm.script)}
-            </div>
-          ))}
-        </div>
-      </div>
-    )
+      )
+    }
   }
 
   function render_vm_list2() {
@@ -471,19 +530,22 @@ function App() {
             fileName = script_list_dmz[0] || ""
           } else if (vm_name === "lanB") {
             fileName = script_lanB
-          } else if (/^(lan|dmz)\d+$/.test(vm_name)) {
-              // Para nombres como "lan1", "dmz2", etc.
-              const match = vm_name.match(/^(lan|dmz)(\d+)$/);
+            } else if (/^(lan|dmz|client)\d+$/.test(vm_name)) {
+              // Para nombres como "lan1", "dmz2", "client1", etc.
+              const match = vm_name.match(/^(lan|dmz|client)(\d+)$/);
               if (match) {
-                const prefix = match[1];
-                const number = match[2];
-                if (prefix === "lan") {
-                  fileName = script_list_lan[number] || ""
-                  
-                } else if (prefix === "dmz") {
-                  fileName = script_list_dmz[number] || ""
-                }
+              const prefix = match[1];
+              const number = match[2];
+              if (prefix === "lan") {
+                fileName = script_list_lan[number] || "";
+              } else if (prefix === "dmz") {
+                fileName = script_list_dmz[number] || "";
+              } else if (prefix === "client") {
+                fileName = script_list_client[number] || "";
               }
+              }
+          } else if (vm_name === "server") {
+            fileName = script_server || ""
           }
           console.log('VM name:', vm_name)
           console.log('File name:', fileName)
@@ -535,19 +597,22 @@ function App() {
             fileName = data_script.script_list_dmz[0] || ""
           } else if (vm_name === "lanB") {
             fileName = data_script.script_lanB
-          } else if (/^(lan|dmz)\d+$/.test(vm_name)) {
-              // Para nombres como "lan1", "dmz2", etc.
-              const match = vm_name.match(/^(lan|dmz)(\d+)$/);
+            } else if (/^(lan|dmz|client)\d+$/.test(vm_name)) {
+              // Para nombres como "lan1", "dmz2", "client1", etc.
+              const match = vm_name.match(/^(lan|dmz|client)(\d+)$/);
               if (match) {
-                const prefix = match[1];
-                const number = match[2];
-                if (prefix === "lan") {
-                  fileName = data_script.script_list_lan[number] || ""
-                  
-                } else if (prefix === "dmz") {
-                  fileName = data_script.script_list_dmz[number] || ""
-                }
+              const prefix = match[1];
+              const number = match[2];
+              if (prefix === "lan") {
+                fileName = data_script.script_list_lan[number] || "";
+              } else if (prefix === "dmz") {
+                fileName = data_script.script_list_dmz[number] || "";
+              } else if (prefix === "client") {
+                fileName = data_script.script_list_client[number] || "";
               }
+              }
+            } else if (vm_name === "server") {
+            fileName = data_script.script_server || ""
           }
           console.log('VM name:', vm_name)
           console.log('File name:', fileName)
@@ -577,6 +642,9 @@ function App() {
     } else if (name === "dmz") {
       count = node_count_dmz
       setNode_count_dmz(node_count_dmz + 1)
+    } else if (name === "client") {
+      count = node_count_client
+      setNode_count_client(node_count_client + 1)
     }
     const newVmName = name + (count + 1).toString()
     setVm_list((prevList) => [...prevList, new VMachine(newVmName, "not created", false, "")]);
@@ -588,6 +656,9 @@ function App() {
     }
     if (name.includes("dmz")) {
       setNode_count_dmz(node_count_dmz - 1)
+    }
+    if (name.includes("client")) {
+      setNode_count_client(node_count_client - 1)
     }
     setVm_list((prevList) => prevList.filter((vm) => vm.name !== name));
     setVm_list((prevList) => {
@@ -647,6 +718,11 @@ function App() {
           script_firewall1: script_firewall1,
           script_firewall2: script_firewall2,
           script_lanB: script_lanB,
+          learning: Number(learning),
+          script_server: script_server,
+          script_list_client: script_list_client,
+          bad_client: bad_client,
+          node_count_client: Number(node_count_client),
         }),
       });
 
@@ -716,28 +792,34 @@ function App() {
           });
     } else if (vm_name === "lanB") {
       setScript_lanB(file.name)
-    } else if (/^(lan|dmz)\d+$/.test(vm_name)) {
-      // Para nombres como "lan1", "dmz2", etc.
-      const match = vm_name.match(/^(lan|dmz)(\d+)$/);
+    } else if (/^(lan|dmz|client)\d*$/.test(vm_name)) {
+      // Para nombres como "lan1", "dmz2", "client", "client1", etc.
+      const match = vm_name.match(/^(lan|dmz|client)(\d*)$/);
       if (match) {
-        const prefix = match[1];
-        const number = match[2];
-        if (prefix === "lan") {
-          setScript_list_lan((prevList) => {
-            const updatedList = [...prevList];
-            updatedList[number] = file.name;
-            return updatedList;
-          });
-          // Aquí puedes acceder a 'number' si lo necesitas
-        } else if (prefix === "dmz") {
-          setScript_list_dmz((prevList) => {
-            const updatedList = [...prevList];
-            updatedList[number] = file.name;
-            return updatedList;
-          });
-          // Aquí puedes acceder a 'number' si lo necesitas
-        }
+      const prefix = match[1];
+      const number = match[2];
+      if (prefix === "lan") {
+        setScript_list_lan((prevList) => {
+        const updatedList = [...prevList];
+        updatedList[number ? Number(number) : 0] = file.name;
+        return updatedList;
+        });
+      } else if (prefix === "dmz") {
+        setScript_list_dmz((prevList) => {
+        const updatedList = [...prevList];
+        updatedList[number ? Number(number) : 0] = file.name;
+        return updatedList;
+        });
+      } else if (prefix === "client") {
+        setScript_list_client((prevList) => {
+        const updatedList = [...prevList];
+        updatedList[number ? Number(number) : 0] = file.name;
+        return updatedList;
+        });
       }
+      }
+    } else if (vm_name === "server") {
+      setScript_server(file.name)
     }
 
     set_VMachine_script(vm_name, file.name)
@@ -784,6 +866,11 @@ function App() {
         script_firewall1: script_firewall1,
         script_firewall2: script_firewall2,
         script_lanB: script_lanB,
+        learning: Number(learning),
+        script_server: script_server,
+        script_list_client: script_list_client,
+        bad_client: bad_client,
+        node_count_client: Number(node_count_client),
       }),
     })
       .then((response) => response.json())
@@ -888,7 +975,6 @@ function App() {
   } else {
     return (
     <>
-      {/*render_vm_list2()*/}
       {cluster_selection()}
     </>
     )

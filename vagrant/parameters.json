@@ -5,12 +5,21 @@
   "dual_firewall": 0,
   "script_list_lan": [
     null,
-    "Sin tídlo.png",
+    "",
     "",
     "script.sh"
   ],
   "script_list_dmz": [],
   "script_firewall1": "script.sh",
   "script_firewall2": "",
-  "script_lanB": ""
+  "script_lanB": "",
+  "learning": 1,
+  "script_server": "",
+  "script_list_client": [
+    null,
+    null,
+    "script.sh"
+  ],
+  "bad_client": [],
+  "node_count_client": 3
 }
