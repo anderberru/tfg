@@ -292,7 +292,7 @@ function App() {
     }
   }
 
-  function v_box(name, state, isFirewall, script) {
+  function v_box(name, state, isFirewall, script, isBad) {
     return (
       <div className="v-box">
         <h2>{name}</h2>
@@ -301,6 +301,7 @@ function App() {
         <button disabled={state != "running"} onClick={() => open_vm_console(name)}>Open Console</button>
         {delete_vm_button(name)}
         {upload_file_button(name, script)}
+        {bad_client_button(name, isBad)}
       </div>
     )
   }
@@ -358,6 +359,45 @@ function App() {
             </>
         )
       }
+  }
+
+  function set_isBad(name, isBad) {
+    setBad_client((prevList) => {
+      const updatedList = [...prevList];
+      const index = parseInt(name.replace(/^\D+/g, '')) || 0;
+      updatedList[index] = isBad; 
+      return updatedList;
+    });
+
+    setVm_list((prevList) => {
+      const updatedList = prevList.map((vm) => {
+        if (vm.name === name) {
+          return new VMachine(name, vm.state, vm.isFirewall, vm.script, isBad);
+        }
+        return vm;
+      }
+      );
+      return updatedList;
+    });
+  }
+
+  function bad_client_button(name, isBad) {
+    if (name.includes("client")) {
+      return (
+        <div>
+          <label disabled={app_state !== "not created"}>
+            Bad Client:
+            <input disabled={app_state !== "not created"}
+              type="checkbox"
+              checked={isBad === 1}
+              onChange={(e) => set_isBad(name, e.target.checked ? 1 : 0)}
+            />
+          </label>
+        </div>
+      )
+    }
+    return null;
+
   }
 
   function remove_script(name) {
@@ -423,7 +463,7 @@ function App() {
             <h2>Firewalls</h2>
             {firewalls.map((vm) => (
               <div key={vm.name}>
-                {v_box(vm.name, vm.state, vm.isFirewall, vm.script)}
+                {v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad)}
               </div>
             ))}
           </div>
@@ -432,7 +472,7 @@ function App() {
             <button disabled={app_state != "not created"} onClick={() => add_vm("lan")}>Add LAN Node</button>
             {lanNodes.map((vm) => (
               <div key={vm.name}>
-                {v_box(vm.name, vm.state, vm.isFirewall, vm.script)}
+                {v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad)}
               </div>
             ))}
           </div>
@@ -441,7 +481,7 @@ function App() {
             <button disabled={app_state != "not created"} onClick={() => add_vm("dmz")}>Add DMZ Node</button>
             {dmzNodes.map((vm) => (
               <div key={vm.name}>
-                {v_box(vm.name, vm.state, vm.isFirewall, vm.script)}
+                {v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad)}
               </div>
             ))}
           </div>
@@ -457,7 +497,7 @@ function App() {
             <h2>Server</h2>
             {servers.map((vm) => (
               <div key={vm.name}>
-                {v_box(vm.name, vm.state, vm.isFirewall, vm.script)}
+                {v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad)}
               </div>
             ))}
           </div>
@@ -466,7 +506,7 @@ function App() {
             <button disabled={app_state != "not created"} onClick={() => add_vm("client")}>Add Client Node</button>
             {clientNodes.map((vm) => (
               <div key={vm.name}>
-                {v_box(vm.name, vm.state, vm.isFirewall, vm.script)}
+                {v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad)}
               </div>
             ))}
           </div>
@@ -475,18 +515,6 @@ function App() {
     }
   }
 
-  function render_vm_list2() {
-    return (
-      <div>
-        {vm_list.map((vm) => (
-          <>
-            <p>Name: {vm.name}</p>
-            <p>script: {vm.script}</p>
-          </>
-        ))}
-      </div>
-    )
-  }
 
   function set_vm_list_state(state) {
     const vmList = vm_list.map((vm) => {
@@ -495,7 +523,7 @@ function App() {
           const isFirewall = (vmName === "firewall1" || vmName === "firewall2")
           const script = vm.script
   
-          return new VMachine(vmName, vmState, isFirewall, script)
+          return new VMachine(vmName, vmState, isFirewall, script, vm.isBad)
       })
     setVm_list(vmList)
   }
@@ -514,6 +542,7 @@ function App() {
           const vmState = vm.status
           const isFirewall = (vm_name === "firewall1" || vm_name === "firewall2")
           let fileName;
+          let isBad = 0;
           
           if (vm_name === "firewall1") {
             console.log('firewall1')
@@ -542,6 +571,7 @@ function App() {
                 fileName = script_list_dmz[number] || "";
               } else if (prefix === "client") {
                 fileName = script_list_client[number] || "";
+                isBad = bad_client[number] || 0;
               }
               }
           } else if (vm_name === "server") {
@@ -550,7 +580,7 @@ function App() {
           console.log('VM name:', vm_name)
           console.log('File name:', fileName)
   
-          return new VMachine(vm_name, vmState, isFirewall, fileName)
+          return new VMachine(vm_name, vmState, isFirewall, fileName, isBad)
         })
         if (!pageLoaded) {
           setApp_state(check_app_state(vmList));
@@ -581,6 +611,7 @@ function App() {
           const vmState = vm.status
           const isFirewall = (vm_name === "firewall1" || vm_name === "firewall2")
           let fileName;
+          let isBad = 0;
           
           if (vm_name === "firewall1") {
             console.log('firewall1')
@@ -609,6 +640,7 @@ function App() {
                 fileName = data_script.script_list_dmz[number] || "";
               } else if (prefix === "client") {
                 fileName = data_script.script_list_client[number] || "";
+                isBad = data_script.bad_client[number] || 0;
               }
               }
             } else if (vm_name === "server") {
@@ -617,7 +649,7 @@ function App() {
           console.log('VM name:', vm_name)
           console.log('File name:', fileName)
   
-          return new VMachine(vm_name, vmState, isFirewall, fileName)
+          return new VMachine(vm_name, vmState, isFirewall, fileName, isBad)
         })
         if (!pageLoaded) {
           setApp_state(check_app_state(vmList));

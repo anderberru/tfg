@@ -1,5 +1,5 @@
 {
-  "node_count_lan": 3,
+  "node_count_lan": 2,
   "node_count_dmz": 0,
   "lan_subnet": 0,
   "dual_firewall": 0,
@@ -20,6 +20,11 @@
     null,
     "script.sh"
   ],
-  "bad_client": [],
+  "bad_client": [
+    null,
+    1,
+    0,
+    1
+  ],
   "node_count_client": 3
 }
