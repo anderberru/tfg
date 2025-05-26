@@ -23,6 +23,6 @@ def configure_cluster(config)
         end
     end
     
-
-
 end
+
+

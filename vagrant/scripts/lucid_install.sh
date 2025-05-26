@@ -16,14 +16,14 @@ pip install scikit-learn==1.2.2 h5py pyshark protobuf==3.19.6
 pip install numpy==1.23.5
 
 # copy lucid-ddos
-echo "Copiando lucid..."
+echo "Copying lucid..."
 if [ -d "/vagrant/programs" ]; then
     cp /vagrant/programs/lucid-ddos.zip ~/
     unzip ~/lucid-ddos.zip
     rm ~/lucid-ddos.zip
     cp /vagrant/lucid_alert.py ~/lucid-ddos/
 else
-    echo "Advertencia: No se encontraron aplicaciones en /vagrant/programs"
+    echo "No programs found in /vagrant/programs"
 fi
 
 #conda deactivate

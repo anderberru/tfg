@@ -1,53 +1,53 @@
 #!/bin/bash
 
-# Movernos al directorio home de vagrant
+# Move to vagrant's home directory
 cd /home/vagrant || exit
 mkdir files
 
-# Descargar Tomcat
-echo "Instalando Apache Tomcat..."
-echo "Copiando aplicaciones Struts a Tomcat..."
+# Download Tomcat
+echo "Installing Apache Tomcat..."
+echo "Copying Struts applications to Tomcat..."
 if [ -d "/vagrant/programs" ]; then
     cp /vagrant/programs/* ./
 else
-    echo "Advertencia: No se encontraron aplicaciones en /vagrant/programs"
+    echo "Warning: No applications found in /vagrant/programs"
 fi
 
-# Verificar si la descarga fue exitosa
+# Check if the download was successful
 if [ ! -f "apache-tomcat-9.0.100.tar.gz" ]; then
-    echo "Error: No se pudo descargar Tomcat"
+    echo "Error: Could not download Tomcat"
     exit 1
 fi
 
-# Extraer Tomcat
-echo "Extrayendo Apache Tomcat..."
+# Extract Tomcat
+echo "Extracting Apache Tomcat..."
 tar -xvzf apache-tomcat-9.0.100.tar.gz
 
-# Verificar si la extracción fue exitosa
+# Check if extraction was successful
 if [ ! -d "apache-tomcat-9.0.100" ]; then
-    echo "Error: No se pudo extraer Tomcat"
+    echo "Error: Could not extract Tomcat"
     exit 1
 fi
 
-# Mover la carpeta a 'tomcat'
-echo "Moviendo Apache Tomcat a ~/tomcat..."
+# Move the folder to 'tomcat'
+echo "Moving Apache Tomcat to ~/tomcat..."
 mv apache-tomcat-9.0.100 tomcat
 
-# Verificar si la carpeta fue movida
+# Check if the folder was moved
 if [ ! -d "tomcat" ]; then
-    echo "Error: No se pudo mover Tomcat"
+    echo "Error: Could not move Tomcat"
     exit 1
 fi
 
-# Copiar las aplicaciones de Struts si existen
-echo "Copiando aplicaciones Struts a Tomcat..."
+# Copy Struts applications if they exist
+echo "Copying Struts applications to Tomcat..."
 if [ -d "/vagrant/struts" ]; then
     cp /vagrant/struts/* ~/tomcat/webapps/
 else
-    echo "Advertencia: No se encontraron aplicaciones en /vagrant/struts"
+    echo "Warning: No applications found in /vagrant/struts"
 fi
 
-# Iniciar Tomcat
-echo "Iniciando Tomcat..."
+# Start Tomcat
+echo "Starting Tomcat..."
 cd ~/tomcat/bin || exit
 ./startup.sh

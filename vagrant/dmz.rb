@@ -102,6 +102,45 @@ end
       
     end
 
+    (1..$NODE_COUNT_DMZ).each do |i|
+        config.vm.define "dmz#{i}" do |dmz|
+        dmz.vm.box = $BOX_IMAGE
+        dmz.vm.hostname = "dmz"
+        dmz.vm.network "private_network", type: "static", ip: "10.10.20.#{10 + i}" # DMZ network
+        
+        dmz.vm.provision "shell", inline: <<-SHELL
+          apt-get update
+          apt-get install -y avahi-daemon libnss-mdns
+          apt-get install -y openjdk-21-jdk
+          apt-get install -y traceroute
+          apt-get install -y mysql-server
+          echo "debconf debconf/frontend select Noninteractive" | debconf-set-selections
+          echo "wireshark-common wireshark-common/install-setuid boolean true" | debconf-set-selections
+          DEBIAN_FRONTEND=noninteractive apt-get install -y tshark
+          apt-get install -y unzip
+          # Wait for MySQL to be ready
+          until mysqladmin ping --silent; do
+            sleep 1
+          done
+        SHELL
+
+        dmz.vm.provision "shell", path: "scripts/lucid_install.sh", privileged: false
+        dmz.vm.provision "shell", path: "scripts/mysql_config.sh"
+        dmz.vm.provision "shell", path: "scripts/tomcat.sh", privileged: false
+
+        if !$SCRIPT_LIST_DMZ[i].to_s.strip.empty?
+          dmz.vm.provision "shell", path: $CUSTOM_SCRIPT_DIR+$SCRIPT_LIST_DMZ[i], privileged: false
+        end
+
+        if $DUAL_FIREWALL == 1
+          dmz.vm.provision "shell", path: "scripts/dmz.sh"
+        else
+          dmz.vm.provision "shell", path: "DMZ1/dmz_simple.sh"
+        end
+        
+      end
+    end
+
     # Servidor en la LAN (solo acceso interno)
     config.vm.define "lan" do |lan|
       lan.vm.box = $BOX_IMAGE
@@ -112,13 +151,12 @@ end
         apt-get update
         apt-get install -y traceroute
         apt-get install -y mysql-server
-        # Esperar a que MySQL esté listo
+        # Wait for MySQL to be ready
         until mysqladmin ping --silent; do
           sleep 1
         done
         cp /vagrant/scripts/mysql.sql /tmp/mysql.sql
         mysql < /tmp/mysql.sql
-        #mysql -u struts -p'password' -e "CREATE DATABASE struts;"
       SHELL
 
       lan.vm.provision "shell", path: "scripts/mysql_config.sh"
@@ -147,13 +185,12 @@ end
           apt-get update
           apt-get install -y traceroute
           apt-get install -y mysql-server
-          # Esperar a que MySQL esté listo
+          # Wait for MySQL to be ready
           until mysqladmin ping --silent; do
             sleep 1
           done
           cp /vagrant/scripts/mysql.sql /tmp/mysql.sql
           mysql < /tmp/mysql.sql
-          #mysql -u struts -p'password' -e "CREATE DATABASE struts;"
         SHELL
 
         lan.vm.provision "shell", path: "scripts/mysql_config.sh"
@@ -178,8 +215,8 @@ end
         lanB.vm.hostname = "lanB"
         lanB.vm.network "private_network", type: "static", ip: "10.10.10.130" # LAN B
 
-        if $SCRIPT_LANB != ""
-          lanB.vm.provision "shell", path: $CUSTOM_SCRIPT_DIR+$SCRIPT_LANB, privileged: false
+        if !$SCRIPT_LIST_LANB[0].to_s.strip.empty?
+          lanB.vm.provision "shell", path: $CUSTOM_SCRIPT_DIR+$SCRIPT_LIST_LANB[0], privileged: false
         end
 
         if $DUAL_FIREWALL == 1
@@ -188,6 +225,26 @@ end
           lanB.vm.provision "shell", path: "DMZ1/lan_simple.sh"
         end
       end
+
+      (1..$NODE_COUNT_LANB).each do |i|
+        config.vm.define "lanB#{i}" do |lanB|
+          lanB.vm.box = $BOX_IMAGE
+          lanB.vm.hostname = "lanB#{i}"
+          lanB.vm.network "private_network", type: "static", ip: "10.10.10.#{130 + 1}" # LAN B
+
+            if !$SCRIPT_LIST_LANB[i].to_s.strip.empty?
+              lanB.vm.provision "shell", path: $CUSTOM_SCRIPT_DIR+$SCRIPT_LIST_LANB[i], privileged: false
+            end
+
+            if $DUAL_FIREWALL == 1
+              lanB.vm.provision "shell", path: "scripts/lan.sh"
+            else
+              lanB.vm.provision "shell", path: "DMZ1/lan_simple.sh"
+            end
+          
+        end
+      end
+
     end
 
 end

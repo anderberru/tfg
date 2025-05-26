@@ -9,6 +9,7 @@ function App() {
   const [pageLoaded, setPageLoaded] = useState(false)
   const [count, setCount] = useState(0)
   const [node_count_lan, setNode_count_lan] = useState(0)
+  const [node_count_lanB, setNode_count_lanB] = useState(0)
   const [node_count_dmz, setNode_count_dmz] = useState(0)
   const [node_count_client, setNode_count_client] = useState(2)
   const [lan_subnet, setLan_subnet] = useState(0)
@@ -21,7 +22,7 @@ function App() {
   const [script_list_dmz, setScript_list_dmz] = useState([])
   const [script_firewall1, setScript_firewall1] = useState("")
   const [script_firewall2, setScript_firewall2] = useState("")
-  const [script_lanB, setScript_lanB] = useState("")
+  const [script_list_lanB, setScript_list_lanB] = useState([])
   const [script_list_client, setScript_list_client] = useState([])
   const [bad_client, setBad_client] = useState([])
   const [script_server, setScript_server] = useState("")
@@ -89,19 +90,24 @@ function App() {
   useEffect(() => {
     // Esta función se ejecuta solo una vez al cargar la página
     console.log('Page loaded')
+    fetch('/checkTools')
+    .then(res => res.json())
+    .then(data => {
+      console.log('Herramientas instaladas:', data);
+    });
     read_parameters()
       .then((data) => {
         console.log('Read parameters:', data)
         setNode_count_lan(data.node_count_lan)
         setNode_count_dmz(data.node_count_dmz)
+        setNode_count_lanB(data.node_count_lanB || 0)
         setLan_subnet(data.lan_subnet)
         setDmz_type(data.dual_firewall)
         setScript_list_lan(data.script_list_lan)
         setScript_list_dmz(data.script_list_dmz)
-        console.log('FIREWALL1:  ', data.script_firewall1)
+        setScript_list_lanB(data.script_list_lanB || [])
         setScript_firewall1(data.script_firewall1)
         setScript_firewall2(data.script_firewall2)
-        setScript_lanB(data.script_lanB)
         setLearning(data.learning || 0)
         setScript_server(data.script_server || "")
         setScript_list_client(data.script_list_client || [])
@@ -129,7 +135,7 @@ function App() {
   };
 
   updateBackend();
-  }, [dmz_type, learning]);
+  }, [dmz_type, learning, lan_subnet]);
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
@@ -183,30 +189,6 @@ function App() {
         <option value="0">DMZ</option>
         <option value="1">Distributed Machine Learning</option>
       </select>
-      </label>
-      <label>
-      Number of nodes in LAN:
-      <input
-        disabled={app_state != "not created"}
-        type="number"
-        value={node_count_lan}
-        onChange={(e) => {
-        setNode_count_lan(e.target.value);
-        
-        }}
-      />
-      </label>
-      <label>
-      Number of nodes in DMZ:
-      <input
-        disabled={app_state != "not created"}
-        type="number"
-        value={node_count_dmz}
-        onChange={(e) => {
-        setNode_count_dmz(e.target.value);
-       
-        }}
-      />
       </label>
       <label>
       LAN Subnet:
@@ -419,10 +401,14 @@ function App() {
         return updatedList;
       });
     } else if (name === "lanB") {
-      setScript_lanB("")
-    } else if (/^(lan|dmz|client)\d+$/.test(name)) {
-      // Para nombres como "lan1", "dmz2", "client1", etc.
-      const match = name.match(/^(lan|dmz|client)(\d+)$/);
+      setScript_list_lanB((prevList) => {
+        const updatedList = [...prevList];
+        updatedList[0] = "";
+        return updatedList;
+      });
+    } else if (/^(lanB|lan|dmz|client)\d+$/.test(name)) {
+      // Para nombres como "lanB1", "lan1", "dmz2", "client1", etc.
+      const match = name.match(/^(lanB|lan|dmz|client)(\d+)$/);
       if (match) {
       const prefix = match[1];
       const number = match[2];
@@ -444,6 +430,12 @@ function App() {
         updatedList[number] = "";
         return updatedList;
         });
+      } else if (prefix === "lanB") {
+        setScript_list_lanB((prevList) => {
+        const updatedList = [...prevList];
+        updatedList[number] = "";
+        return updatedList;
+        });
       }
       }
     } else if (name === "server") {
@@ -454,7 +446,8 @@ function App() {
   function render_vm_list() {
     if (learning != 1) {
       const firewalls = vm_list.filter(vm => vm.name.includes('firewall'));
-      const lanNodes = vm_list.filter(vm => vm.name.includes('lan'));
+      const lanNodes = vm_list.filter(vm => vm.name.includes('lan') && !vm.name.includes('lanB'));
+      const lanBNodes = vm_list.filter(vm => vm.name.includes('lanB'));
       const dmzNodes = vm_list.filter(vm => vm.name.includes('dmz'));
 
       return (
@@ -476,6 +469,7 @@ function App() {
               </div>
             ))}
           </div>
+          {render_vm_list_lanB(lanBNodes)}
           <div className="dmz-section">
             <h2>DMZ Nodes</h2>
             <button disabled={app_state != "not created"} onClick={() => add_vm("dmz")}>Add DMZ Node</button>
@@ -512,6 +506,26 @@ function App() {
           </div>
         </div>
       )
+    }
+  }
+
+  function render_vm_list_lanB(list) {
+    if (lan_subnet != 0) {
+      return (
+        <div className="vm-list">
+          <div className="lanB-section">
+            <h2>LANB Nodes</h2>
+            <button disabled={app_state != "not created"} onClick={() => add_vm("lanB")}>Add LANB Node</button>
+            {list.map((vm) => (
+              <div key={vm.name}>
+                {v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad)}
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    } else {
+      return;
     }
   }
 
@@ -558,10 +572,10 @@ function App() {
             console.log('dmz')
             fileName = script_list_dmz[0] || ""
           } else if (vm_name === "lanB") {
-            fileName = script_lanB
-            } else if (/^(lan|dmz|client)\d+$/.test(vm_name)) {
-              // Para nombres como "lan1", "dmz2", "client1", etc.
-              const match = vm_name.match(/^(lan|dmz|client)(\d+)$/);
+            fileName = script_list_lanB[0] || ""
+            } else if (/^(lanB|lan|dmz|client)\d+$/.test(vm_name)) {
+              // Para nombres como "lanB1", "lan1", "dmz2", "client1", etc.
+              const match = vm_name.match(/^(lanB|lan|dmz|client)(\d+)$/);
               if (match) {
               const prefix = match[1];
               const number = match[2];
@@ -572,6 +586,8 @@ function App() {
               } else if (prefix === "client") {
                 fileName = script_list_client[number] || "";
                 isBad = bad_client[number] || 0;
+              } else if (prefix === "lanB") {
+                fileName = script_list_lanB[number] || "";
               }
               }
           } else if (vm_name === "server") {
@@ -627,10 +643,10 @@ function App() {
             console.log('dmz')
             fileName = data_script.script_list_dmz[0] || ""
           } else if (vm_name === "lanB") {
-            fileName = data_script.script_lanB
-            } else if (/^(lan|dmz|client)\d+$/.test(vm_name)) {
-              // Para nombres como "lan1", "dmz2", "client1", etc.
-              const match = vm_name.match(/^(lan|dmz|client)(\d+)$/);
+            fileName = data_script.script_list_lanB[0] || "";
+            } else if (/^(lanB|lan|dmz|client)\d+$/.test(vm_name)) {
+              // Para nombres como "lanB1", "lan1", "dmz2", "client1", etc.
+              const match = vm_name.match(/^(lanB|lan|dmz|client)(\d+)$/);
               if (match) {
               const prefix = match[1];
               const number = match[2];
@@ -641,6 +657,8 @@ function App() {
               } else if (prefix === "client") {
                 fileName = data_script.script_list_client[number] || "";
                 isBad = data_script.bad_client[number] || 0;
+              } else if (prefix === "lanB") {
+                fileName = data_script.script_list_lanB[number] || "";
               }
               }
             } else if (vm_name === "server") {
@@ -655,7 +673,9 @@ function App() {
           setApp_state(check_app_state(vmList));
           //setPageLoaded(true);
         }
+        console.log('NOT PAGE LOADED');
         setPageLoaded(true);
+        console.log('PAGE LOADED');
         console.log('App state:', app_state);
         setVm_list(vmList)
         console.log('VM List mapped:', vmList)
@@ -677,13 +697,18 @@ function App() {
     } else if (name === "client") {
       count = node_count_client
       setNode_count_client(node_count_client + 1)
+    } else if (name === "lanB") {
+      count = node_count_lanB
+      setNode_count_lanB(node_count_lanB + 1)
     }
     const newVmName = name + (count + 1).toString()
     setVm_list((prevList) => [...prevList, new VMachine(newVmName, "not created", false, "")]);
   }
 
   function remove_vm(name) {
-    if (name.includes("lan")) {
+    if (name.includes("lanB")) {
+      setNode_count_lanB(node_count_lanB - 1)
+    } else if (name.includes("lan")) {
       setNode_count_lan(node_count_lan - 1)
     }
     if (name.includes("dmz")) {
@@ -743,13 +768,14 @@ function App() {
         body: JSON.stringify({
           node_count_lan: Number(node_count_lan),
           node_count_dmz: Number(node_count_dmz),
+          node_count_lanB: Number(node_count_lanB),
           lan_subnet: Number(lan_subnet),
           dual_firewall: Number(dmz_type),
           script_list_lan: script_list_lan,
           script_list_dmz: script_list_dmz,
           script_firewall1: script_firewall1,
           script_firewall2: script_firewall2,
-          script_lanB: script_lanB,
+          script_list_lanB: script_list_lanB,
           learning: Number(learning),
           script_server: script_server,
           script_list_client: script_list_client,
@@ -823,10 +849,14 @@ function App() {
             return updatedList;
           });
     } else if (vm_name === "lanB") {
-      setScript_lanB(file.name)
-    } else if (/^(lan|dmz|client)\d*$/.test(vm_name)) {
-      // Para nombres como "lan1", "dmz2", "client", "client1", etc.
-      const match = vm_name.match(/^(lan|dmz|client)(\d*)$/);
+      setScript_list_lanB((prevList) => {
+            const updatedList = [...prevList];
+            updatedList[0] = file.name;
+            return updatedList;
+          });
+    } else if (/^(lanB|lan|dmz|client)\d*$/.test(vm_name)) {
+      // Para nombres como "lanB1", "lan1", "dmz2", "client", "client1", etc.
+      const match = vm_name.match(/^(lanB|lan|dmz|client)(\d*)$/);
       if (match) {
       const prefix = match[1];
       const number = match[2];
@@ -844,6 +874,12 @@ function App() {
         });
       } else if (prefix === "client") {
         setScript_list_client((prevList) => {
+        const updatedList = [...prevList];
+        updatedList[number ? Number(number) : 0] = file.name;
+        return updatedList;
+        });
+      } else if (prefix === "lanB") {
+        setScript_list_lanB((prevList) => {
         const updatedList = [...prevList];
         updatedList[number ? Number(number) : 0] = file.name;
         return updatedList;
@@ -891,13 +927,14 @@ function App() {
       body: JSON.stringify({
         node_count_lan: Number(node_count_lan),
         node_count_dmz: Number(node_count_dmz),
+        node_count_lanB: Number(node_count_lanB),
         lan_subnet: Number(lan_subnet),
         dual_firewall: Number(dmz_type),
         script_list_lan: script_list_lan,
         script_list_dmz: script_list_dmz,
         script_firewall1: script_firewall1,
         script_firewall2: script_firewall2,
-        script_lanB: script_lanB,
+        script_list_lanB: script_list_lanB,
         learning: Number(learning),
         script_server: script_server,
         script_list_client: script_list_client,

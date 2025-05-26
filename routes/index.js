@@ -55,9 +55,35 @@ function getLinuxTerminal() {
   return null;
 }
 
+function checkProgramInstalled(command, name) {
+  return new Promise((resolve) => {
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.log(`${name} not found:`, stderr.trim());
+        resolve({ name, installed: false });
+      } else {
+        console.log(`${name} found:`, stdout.trim());
+        resolve({ name, installed: true, version: stdout.trim() });
+      }
+    });
+  });
+}
+
+async function checkDependencies() {
+  const vagrant = await checkProgramInstalled('vagrant --version', 'Vagrant');
+  const virtualbox = await checkProgramInstalled('VBoxManage --version', 'VirtualBox');
+
+  return { vagrant, virtualbox };
+}
+
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'dist', 'index.html'));
+});
+
+router.get('/checkTools', async (req, res) => {
+  const status = await checkDependencies();
+  res.json(status);
 });
 
 router.post('/vagrantSsh', function(req, res, next) {

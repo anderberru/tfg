@@ -50,6 +50,10 @@ iptables -A FORWARD -p icmp -j ACCEPT
 # Permitir acceso SSH desde Internet al firewall (Opcional y peligroso, restringir si es posible)
 iptables -A INPUT -p tcp --dport 22 -j ACCEPT
 
+# bloquear tráfico desde LANB A a DMZ
+iptables -A FORWARD -s 10.10.10.128/25 -d 10.10.20.0/24 -j DROP
+iptables -A FORWARD -s 10.10.10.128/25 -d 10.10.20.0/24 -p icmp -j DROP
+
 # Permitir acceso desde LAN (10.10.10.0/24) a la DMZ (10.10.20.0/24)
 iptables -A FORWARD -s 10.10.10.0/24 -d 10.10.20.0/24 -j ACCEPT
 iptables -A FORWARD -s 10.10.10.0/24 -d 10.10.20.0/24 -p tcp --dport 8080 -j ACCEPT
@@ -88,11 +92,6 @@ iptables -t nat -A POSTROUTING -o eth3 -j MASQUERADE  # eth0 es la interfaz de I
 
 # Bloquear tráfico desde DMZ a LAN
 iptables -A FORWARD -s 10.10.20.0/24 -d 10.10.10.0/24 -j DROP
-# bloquear tráfico desde LANB A a DMZ
-iptables -A FORWARD -s 10.10.10.128/25 -d 10.10.20.0/24 -j DROP
-iptables -A FORWARD -s 10.10.10.128/25 -d 10.10.20.0/24 -p icmp -j DROP
-
-
 
 # Habilitar el reenvío de paquetes (Forwarding)
 echo 1 > /proc/sys/net/ipv4/ip_forward
