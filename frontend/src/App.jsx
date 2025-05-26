@@ -27,6 +27,10 @@ function App() {
   const [bad_client, setBad_client] = useState([])
   const [script_server, setScript_server] = useState("")
   const [learning, setLearning] = useState(0)
+  const [vagrantVersion, setVagrantVersion] = useState("")
+  const [virtualBoxVersion, setVirtualBoxVersion] = useState("")
+  const [isVagrantInstalled, setIsVagrantInstalled] = useState(false)
+  const [isVirtualBoxInstalled, setIsVirtualBoxInstalled] = useState(false)
 
 
   const socket = io(); // Se conecta al mismo host
@@ -94,8 +98,16 @@ function App() {
     .then(res => res.json())
     .then(data => {
       console.log('Herramientas instaladas:', data);
-    });
-    read_parameters()
+      setIsVagrantInstalled(data.vagrant.installed);
+      if (data.vagrant.installed) {
+        setVagrantVersion(data.vagrant.version);
+      }
+      setIsVirtualBoxInstalled(data.virtualbox.installed);
+      if (data.virtualbox.installed) {
+        setVirtualBoxVersion(data.virtualbox.version);
+      }
+    }).then(() => {
+      read_parameters()
       .then((data) => {
         console.log('Read parameters:', data)
         setNode_count_lan(data.node_count_lan)
@@ -116,6 +128,8 @@ function App() {
         return data;
       }).then((data) => {vm_status2(data);})
       .catch(error => console.error("Error:", error));
+    })
+    
     
   }, []) // <-- array vacío = solo en el primer render
 
@@ -174,7 +188,7 @@ function App() {
     return (
       <>
       <div>
-      <h1>Cluster Selection</h1>
+      <h1>Cluster Manager</h1>
       <p>Current state: {app_state}</p>
       {render_vm_list()}
       <label>
@@ -1032,10 +1046,19 @@ function App() {
     )
   }
 
+  function display_vagrant_vbox_version() {
+    return (
+      <div className="version-info">
+        <h2>Vagrant Version: {isVagrantInstalled ? vagrantVersion : "Not installed"}</h2>
+        <h2>VirtualBox Version: {isVirtualBoxInstalled ? virtualBoxVersion : "Not installed"}</h2>
+      </div>
+    )
+  }
 
   if (!pageLoaded) {
     return (
       <>
+        {display_vagrant_vbox_version()}
         <div>
           <h1>Loading...</h1>
         </div>
@@ -1044,6 +1067,7 @@ function App() {
   } else {
     return (
     <>
+      {display_vagrant_vbox_version()}
       {cluster_selection()}
     </>
     )

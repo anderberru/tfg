@@ -65,3 +65,13 @@
   white-space: pre-wrap; /* Permite que el texto se ajuste y haga saltos de línea */
   word-wrap: break-word; /* Rompe palabras largas si es necesario */
 }
+
+.version-info {
+  color: #888;
+  font-size: 0.5em;
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  margin: 0;
+  text-align: left;
+}

@@ -73,7 +73,7 @@ async function checkDependencies() {
   const vagrant = await checkProgramInstalled('vagrant --version', 'Vagrant');
   const virtualbox = await checkProgramInstalled('VBoxManage --version', 'VirtualBox');
 
-  return { vagrant, virtualbox };
+  return { vagrant: vagrant, virtualbox: virtualbox };
 }
 
 /* GET home page. */
