@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node ./bin/www",
     "build": "npm run build --prefix ./frontend",
-    "dev": "npm run dev --prefix ./frontend"
+    "dev": "npm run dev --prefix ./frontend",
+    "setup": "node ./public/javascripts/tensorflow_install.js && npm install && npm install --prefix ./frontend && npm run build --prefix ./frontend"
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",
