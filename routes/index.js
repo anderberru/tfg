@@ -148,40 +148,51 @@ router.get('/readParameters', function(req, res, next) {
   });
 });
 
-router.post('/vagrantUp', function(req, res, next) {
-  console.log('vagrantUp endpoint hit');
-  writeJsonFile(path.join(vagrantPath, 'parameters.json'), req.body);
-  
-  vagrantUp = spawn('vagrant', ['up'], { cwd: vagrantPath });
-  io.emit('vagrant-output', 'Starting vagrant up...\n');
+router.post('/vagrantUp', function (req, res, next) {
+  try {
+    console.log('vagrantUp endpoint hit');
 
-  let output = '';
+    writeJsonFile(path.join(vagrantPath, 'parameters.json'), req.body);
 
-  vagrantUp.stdout.on('data', (data) => {
-    line = data.toString();
-    output += line; // acumulamos la salida
-    console.log(`${line.trim()}`);
-    io.emit('vagrant-output', line);
-  });
+    const vagrantUp = spawn('vagrant', ['up'], { cwd: vagrantPath });
+    io.emit('vagrant-output', 'Starting vagrant up...\n');
 
-  vagrantUp.stderr.on('data', (data) => {
-    console.error(`stderr: ${data}`);
-    output += 'stderr: ' + data.toString(); // acumulamos la salida
-    io.emit('vagrant-output', data.toString());
-  });
+    let output = '';
 
-  vagrantUp.on('close', (code) => {
-    const lines = output.trim().split('\n');
-    //console.log('Lista de archivos:', lines);
-    vagrantUp = null; // Limpiamos la variable para que pueda ser reiniciada
-    console.log('Proceso vagrant up terminado');
-    io.emit('vagrant-output', output);
-    io.emit('process-complete', 'Vagrant up process finished');
-    output = "VAGRANT UP PROCESS:\n" + output + "\n";
-    res.json({ message: output });
-  });
+    vagrantUp.stdout.on('data', (data) => {
+      const line = data.toString();
+      output += line;
+      console.log(line.trim());
+      io.emit('vagrant-output', line);
+    });
 
+    vagrantUp.stderr.on('data', (data) => {
+      console.error(`stderr: ${data}`);
+      output += 'stderr: ' + data.toString();
+      io.emit('vagrant-output', data.toString());
+    });
+
+    vagrantUp.on('close', (code) => {
+      const lines = output.trim().split('\n');
+      console.log('Proceso vagrant up terminado');
+      io.emit('vagrant-output', output);
+      io.emit('process-complete', 'Vagrant up process finished');
+
+      output = "VAGRANT UP PROCESS:\n" + output + "\n";
+      try {
+        res.json({ message: output });
+      } catch (err) {
+        console.error('Error enviando la respuesta:', err);
+        res.status(500).json({ error: 'Error enviando la respuesta final' });
+      }
+    });
+
+  } catch (err) {
+    console.error('Error general en /vagrantUp:', err);
+    res.status(500).json({ error: 'Error ejecutando /vagrantUp' });
+  }
 });
+
 
 router.get('/vmList', function(req, res, next) {
 

@@ -10,7 +10,7 @@ const http = require('http');
 const socketIO = require('socket.io');
 */
 
-var { router: indexRouter } = require('./routes/index');
+var { router: indexRouter, setSocket } = require('./routes/index');
 var usersRouter = require('./routes/users');
 
 var app = express();

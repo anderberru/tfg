@@ -820,10 +820,10 @@ function App() {
       const data = await response.json();
       console.log('Read parameters response:', data);
 
-      return data; // Opcional, si querés usar la respuesta más adelante
+      return data; 
     } catch (error) {
       console.error('Error:', error);
-      throw error; // Muy importante: relanzar el error para que pueda capturarse si se usa `await`
+      throw error; 
     }
   }
 
