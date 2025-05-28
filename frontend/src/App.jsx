@@ -32,8 +32,7 @@ function App() {
   const [isVagrantInstalled, setIsVagrantInstalled] = useState(false)
   const [isVirtualBoxInstalled, setIsVirtualBoxInstalled] = useState(false)
 
-
-  const socket = io(); // Se conecta al mismo host
+  const socket = io(); // Connects to the same host
 
   function OutputConsole({ output_full, processComplete }) {
     const [output, setOutput] = useState('');
@@ -43,37 +42,35 @@ function App() {
       const handleOutput = (data) => {
         const el = consoleRef.current;
 
-        // Guardamos si estaba al fondo antes de actualizar
+        // Save if it was at the bottom before updating
         const isNearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 30;
 
         setOutput(prev => prev + data);
 
-        // Esperamos al siguiente render para hacer scroll si era necesario
-        
+        // Wait for the next render to scroll if necessary
         requestAnimationFrame(() => {
           if (isNearBottom) {
             el.scrollTop = el.scrollHeight;
           }
         });
-        
       };
 
       socket.on('vagrant-output', handleOutput);
       return () => socket.off('vagrant-output', handleOutput);
     }, []);
-     // Scroll cuando termina el proceso
-      useEffect(() => {
-        if (processComplete) {
-          const el = consoleRef.current;
-          requestAnimationFrame(() => {
-            if (el) {
-              el.scrollTop = el.scrollHeight;
-            }
-          });
-        } else {
-          setOutput(output_full);
-        }
-      }, [processComplete, output_full]);
+    // Scroll when the process finishes
+    useEffect(() => {
+      if (processComplete) {
+        const el = consoleRef.current;
+        requestAnimationFrame(() => {
+          if (el) {
+            el.scrollTop = el.scrollHeight;
+          }
+        });
+      } else {
+        setOutput(output_full);
+      }
+    }, [processComplete, output_full]);
 
     if (processComplete) {
       return (
@@ -88,16 +85,15 @@ function App() {
         </pre>
       );
     }
-    
   }
 
   useEffect(() => {
-    // Esta función se ejecuta solo una vez al cargar la página
+    // This function runs only once when the page loads
     console.log('Page loaded')
     fetch('/checkTools')
     .then(res => res.json())
     .then(data => {
-      console.log('Herramientas instaladas:', data);
+      console.log('Installed tools:', data);
       setIsVagrantInstalled(data.vagrant.installed);
       if (data.vagrant.installed) {
         setVagrantVersion(data.vagrant.version);
@@ -129,33 +125,31 @@ function App() {
       }).then((data) => {vm_status2(data);})
       .catch(error => console.error("Error:", error));
     })
-    
-    
-  }, []) // <-- array vacío = solo en el primer render
+  }, []) // <-- empty array = only on first render
 
-    // Este effect se ejecutará cada vez que cambie dmz_type
+  // This effect will run every time dmz_type changes
   useEffect(() => {
-  if (!pageLoaded) return;
+    if (!pageLoaded) return;
 
-  const updateBackend = async () => {
-    try {
-      setPageLoaded(false);
-      save_parameters()
-      .then(() => vm_status())
-      .catch(error => console.error("Error:", error));
-    } catch (error) {
-      console.error("Error actualizando parámetros:", error);
-    }
-  };
+    const updateBackend = async () => {
+      try {
+        setPageLoaded(false);
+        save_parameters()
+        .then(() => vm_status())
+        .catch(error => console.error("Error:", error));
+      } catch (error) {
+        console.error("Error updating parameters:", error);
+      }
+    };
 
-  updateBackend();
+    updateBackend();
   }, [dmz_type, learning, lan_subnet]);
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (app_state === "creating" || app_state === "initializing" || app_state === "stopping" || app_state === "destroying") {
         e.preventDefault();
-        e.returnValue = ''; // Algunos navegadores lo requieren para mostrar el mensaje
+        e.returnValue = ''; // Some browsers require this to show the message
       }
     };
 
@@ -166,9 +160,8 @@ function App() {
     };
   }, [app_state]);
 
-
   function check_app_state(vmList) {
-    console.log('LSIT:', vmList)
+    console.log('LIST:', vmList)
     const hasRunning = vmList.some(vm => vm.state === 'running');
     const hasPoweroff = vmList.some(vm => vm.state === 'poweroff');
 
@@ -421,7 +414,7 @@ function App() {
         return updatedList;
       });
     } else if (/^(lanB|lan|dmz|client)\d+$/.test(name)) {
-      // Para nombres como "lanB1", "lan1", "dmz2", "client1", etc.
+      // For names like "lanB1", "lan1", "dmz2", "client1", etc.
       const match = name.match(/^(lanB|lan|dmz|client)(\d+)$/);
       if (match) {
       const prefix = match[1];
@@ -557,8 +550,7 @@ function App() {
   }
 
   function vm_status() {
-    // Call the vagrant status command here
-    // You can use fetch to call your backend API that runs the command
+
     console.log('FIREWALLALA  ', script_firewall1)
     fetch('/vmList')
       .then((response) => response.json())
@@ -588,7 +580,7 @@ function App() {
           } else if (vm_name === "lanB") {
             fileName = script_list_lanB[0] || ""
             } else if (/^(lanB|lan|dmz|client)\d+$/.test(vm_name)) {
-              // Para nombres como "lanB1", "lan1", "dmz2", "client1", etc.
+                // For names like "lanB1", "lan1", "dmz2", "client1", etc.
               const match = vm_name.match(/^(lanB|lan|dmz|client)(\d+)$/);
               if (match) {
               const prefix = match[1];
@@ -627,8 +619,6 @@ function App() {
   }
 
   function vm_status2(data_script) {
-    // Call the vagrant status command here
-    // You can use fetch to call your backend API that runs the command
 
     console.log('FIREWALLALA  ', data_script.script_firewall1)
     fetch('/vmList')
@@ -659,7 +649,7 @@ function App() {
           } else if (vm_name === "lanB") {
             fileName = data_script.script_list_lanB[0] || "";
             } else if (/^(lanB|lan|dmz|client)\d+$/.test(vm_name)) {
-              // Para nombres como "lanB1", "lan1", "dmz2", "client1", etc.
+                // For names like "lanB1", "lan1", "dmz2", "client1", etc.
               const match = vm_name.match(/^(lanB|lan|dmz|client)(\d+)$/);
               if (match) {
               const prefix = match[1];
@@ -754,7 +744,6 @@ function App() {
 
   function open_vm_console(m_name) {
     // Call the vagrant ssh command here
-    // You can use fetch to call your backend API that runs the command
     fetch('/vagrantSsh', {
       method: 'POST',
       headers: {
@@ -801,10 +790,10 @@ function App() {
       const data = await response.json();
       console.log('Save parameters response:', data);
 
-      return data; // Opcional, si querés usar la respuesta más adelante
+      return data;
     } catch (error) {
       console.error('Error:', error);
-      throw error; // Muy importante: relanzar el error para que pueda capturarse si se usa `await`
+      throw error;
     }
   }
 
@@ -844,6 +833,11 @@ function App() {
     
     const file = event.target.files[0];
     console.log('Selected file:', file.name);
+    if (file.name.includes('.sh') === false) {
+      alert('Please upload a .sh file');
+      return;
+    }
+    
     if (vm_name === "firewall1") {
       setScript_firewall1(file.name)
       
@@ -869,7 +863,7 @@ function App() {
             return updatedList;
           });
     } else if (/^(lanB|lan|dmz|client)\d*$/.test(vm_name)) {
-      // Para nombres como "lanB1", "lan1", "dmz2", "client", "client1", etc.
+      // For names like "lanB1", "lan1", "dmz2", "client", "client1", etc.
       const match = vm_name.match(/^(lanB|lan|dmz|client)(\d*)$/);
       if (match) {
       const prefix = match[1];
@@ -926,7 +920,6 @@ function App() {
 
   function vagrant_up() {
     // Call the vagrant up command here
-    // You can use fetch to call your backend API that runs the command
     setProcessComplete(false);
     if (app_state === "not created") {
       setApp_state("creating")
@@ -1002,7 +995,6 @@ function App() {
 
   function vagrant_destroy() {
     // Call the vagrant destroy command here
-    // You can use fetch to call your backend API that runs the command
     setApp_state("destroying")
     setProcessComplete(false);
     fetch('/vagrantDestroy')

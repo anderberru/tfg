@@ -25,7 +25,7 @@ const storage = multer.diskStorage({
     cb(null, dir);
   },
   filename: function (req, file, cb) {
-    cb(null, file.originalname); // Usar el nombre original
+    cb(null, file.originalname); // Use original filename
   }
 });
 
@@ -49,7 +49,7 @@ function writeJsonFile(filePath, data) {
   });
 }
 
-// Función para detectar una terminal disponible en Linux
+// Function to detect available terminal on Linux
 function getLinuxTerminal() {
   const terminals = ['gnome-terminal', 'konsole', 'xfce4-terminal', 'xterm'];
   for (const term of terminals) {
@@ -57,7 +57,7 @@ function getLinuxTerminal() {
       execSync(`which ${term}`, { stdio: 'ignore' });
       return term;
     } catch (_) {
-      // No encontrada, probamos con la siguiente
+      // Not found, try next
     }
   }
   return null;
@@ -123,7 +123,7 @@ router.post('/vagrantSsh', function(req, res, next) {
       console.error('Error:', err);
       return res.status(500).json({ error: 'Failed to open terminal' });
     } else {
-      console.log('Terminal abierta y ejecutando el comando');
+      console.log('Terminal opened and command executed');
       return res.json({ message: 'SSH command executed' });
     }
   });
@@ -182,7 +182,7 @@ router.post('/vagrantUp', function (req, res, next) {
 
     vagrantUp.on('close', (code) => {
       const lines = output.trim().split('\n');
-      console.log('Proceso vagrant up terminado');
+      console.log('Vagrant up process finished');
       io.emit('vagrant-output', output);
       io.emit('process-complete', 'Vagrant up process finished');
 
@@ -190,14 +190,14 @@ router.post('/vagrantUp', function (req, res, next) {
       try {
         res.json({ message: output });
       } catch (err) {
-        console.error('Error enviando la respuesta:', err);
-        res.status(500).json({ error: 'Error enviando la respuesta final' });
+        console.error('Error sending response:', err);
+        res.status(500).json({ error: 'Error sending final response' });
       }
     });
 
   } catch (err) {
-    console.error('Error general en /vagrantUp:', err);
-    res.status(500).json({ error: 'Error ejecutando /vagrantUp' });
+    console.error('General error in /vagrantUp:', err);
+    res.status(500).json({ error: 'Error executing /vagrantUp' });
   }
 });
 
@@ -211,7 +211,7 @@ router.get('/vmList', function(req, res, next) {
 
   command.stdout.on('data', (data) => {
     line = data.toString();
-    output += line; // acumulamos la salida
+    output += line; // accumulate output
     vmList.push(line);
     console.log(`${line.trim()}`);
   });
@@ -222,8 +222,8 @@ router.get('/vmList', function(req, res, next) {
 
   command.on('close', (code) => {
     const lines = output.trim().split('\n');
-    //console.log('Lista de archivos:', lines);
-    console.log('Proceso vagrant status terminado');
+    //console.log('File list:', lines);
+    console.log('Vagrant status process finished');
     const vmjson = vmList_to_json(lines);
     
     res.json({ list: vmjson });
@@ -252,16 +252,16 @@ router.get('/cancelVagrantUp', (req, res) => {
   if (vagrantUp) {
     kill(vagrantUp.pid, 'SIGKILL', (err) => {
       if (err) {
-        console.error('Error al matar proceso:', err);
-        res.status(500).json({ message: 'No se pudo detener vagrant up' });
+        console.error('Error killing process:', err);
+        res.status(500).json({ message: 'Could not stop vagrant up' });
       } else {
-        console.log('Proceso vagrant up cancelado');
+        console.log('Vagrant up process cancelled');
         vagrantUp = null;
-        res.json({ message: 'vagrant up cancelado' });
+        res.json({ message: 'vagrant up cancelled' });
       }
     });
   } else {
-    res.status(400).json({ message: 'No hay proceso activo' });
+    res.status(400).json({ message: 'No active process' });
   }
 });
 
@@ -275,21 +275,21 @@ router.get('/vagrantDestroy', function(req, res, next) {
 
   command.stdout.on('data', (data) => {
     line = data.toString();
-    output += line; // acumulamos la salida
+    output += line; // accumulate output
     console.log(`${line.trim()}`);
     io.emit('vagrant-output', line);
   });
 
   command.stderr.on('data', (data) => {
     console.error(`stderr: ${data}`);
-    output += 'stderr: ' + data.toString(); // acumulamos la salida
+    output += 'stderr: ' + data.toString(); // accumulate output
     io.emit('vagrant-output', data.toString());
   });
 
   command.on('close', (code) => {
     const lines = output.trim().split('\n');
-    //console.log('Lista de archivos:', lines);
-    console.log('Proceso vagrant destroy terminado');
+    //console.log('File list:', lines);
+    console.log('Vagrant destroy process finished');
     io.emit('process-complete', 'Vagrant destroy process finished');
     output = "VAGRANT DESTROY PROCESS:\n" + output + "\n";
     res.json({ message: output });
@@ -307,21 +307,21 @@ router.get('/vagrantHalt', function(req, res, next) {
 
   command.stdout.on('data', (data) => {
     line = data.toString();
-    output += line; // acumulamos la salida
+    output += line; // accumulate output
     console.log(`${line.trim()}`);
     io.emit('vagrant-output', line);
   });
 
   command.stderr.on('data', (data) => {
     console.error(`stderr: ${data}`);
-    output += 'stderr: ' + data.toString(); // acumulamos la salida
+    output += 'stderr: ' + data.toString(); // accumulate output
     io.emit('vagrant-output', data.toString());
   });
 
   command.on('close', (code) => {
     const lines = output.trim().split('\n');
-    //console.log('Lista de archivos:', lines);
-    console.log('Proceso vagrant halt terminado');
+    //console.log('File list:', lines);
+    console.log('Vagrant halt process finished');
     io.emit('process-complete', 'Vagrant halt process finished');
     output = "VAGRANT HALT PROCESS:\n" + output + "\n";
     res.json({ message: output });
@@ -332,14 +332,14 @@ router.get('/vagrantHalt', function(req, res, next) {
 
 router.post('/uploadFile', upload.single('file'), function (req, res) {
   console.log('uploadFile endpoint hit');
-  console.log('Archivo recibido:', req.file);
+  console.log('File received:', req.file);
 
   if (!req.file.originalname.endsWith('.sh')) {
     return res.status(400).json({ error: 'Only .sh files are allowed' });
   }
 
   if (!req.file) {
-    return res.status(400).json({ error: 'No se recibió ningún archivo.' });
+    return res.status(400).json({ error: 'No file received.' });
   }
 
   return res.json({ message: 'File uploaded successfully' });

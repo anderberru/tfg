@@ -23,8 +23,8 @@ jest.mock('child_process', () => {
 
       // Controlled event emission inside the mock
       setImmediate(() => {
-        mockProcess.stdout.emit('data', 'Simulating output\n');
-        mockProcess.stderr.emit('data', 'Simulating error\n');
+        mockProcess.stdout.emit('data', 'Simulated output\n');
+        mockProcess.stderr.emit('data', 'Simulated error\n');
         mockProcess.emit('close', 0);
       });
 
@@ -79,8 +79,8 @@ describe('Vagrant related routes', () => {
         .expect(200);
 
       expect(res.body.message).toContain('VAGRANT UP PROCESS');
-      expect(res.body.message).toContain('Simulating error');
-      expect(res.body.message).toContain('Simulating output');
+      expect(res.body.message).toContain('Simulated error');
+      expect(res.body.message).toContain('Simulated output');
     });
   });
 
@@ -124,8 +124,8 @@ describe('Vagrant related routes', () => {
       const res = await request(app).get('/vagrantDestroy');
       expect(res.statusCode).toBe(200);
       expect(res.body.message).toContain('VAGRANT DESTROY PROCESS');
-      expect(res.body.message).toContain('Simulating output');
-      expect(res.body.message).toContain('Simulating error');
+      expect(res.body.message).toContain('Simulated output');
+      expect(res.body.message).toContain('Simulated error');
     });
   });
 
@@ -134,8 +134,8 @@ describe('Vagrant related routes', () => {
       const res = await request(app).get('/vagrantHalt');
       expect(res.statusCode).toBe(200);
       expect(res.body.message).toContain('VAGRANT HALT PROCESS');
-      expect(res.body.message).toContain('Simulating output');
-      expect(res.body.message).toContain('Simulating error');
+      expect(res.body.message).toContain('Simulated output');
+      expect(res.body.message).toContain('Simulated error');
     });
   });
 
@@ -188,7 +188,7 @@ describe('Tests for file edits and uploads', () => {
       callback(null);
     });
 
-    const payload = { ejemplo: 'valor' };
+    const payload = { example: 'value' };
 
     const res = await request(app)
       .post('/saveParameters')
@@ -204,9 +204,9 @@ describe('Tests for file edits and uploads', () => {
   });
 
   it('POST /uploadFile uploads a file', async () => {
-    jest.resetModules(); // Limpia la cache de módulos para que los mocks surtan efecto
+    jest.resetModules(); // Clear module cache so mocks take effect
 
-    // Mock local de multer dentro del test
+    // Local mock for multer inside the test
     jest.doMock('multer', () => {
       return () => ({
         single: () => (req, res, next) => {
@@ -219,16 +219,16 @@ describe('Tests for file edits and uploads', () => {
       });
     });
 
-    // También mockeamos diskStorage en caso de que el código lo use
+    // Also mock diskStorage in case the code uses it
     const multer = require('multer');
     multer.diskStorage = jest.fn(() => ({}));
 
-    // Importamos app después de los mocks
+    // Import app after mocks
     const app = require('../app');
 
     const res = await request(app)
       .post('/uploadFile')
-      .attach('file', Readable.from(['contenido del archivo']), {
+      .attach('file', Readable.from(['file content']), {
         filename: 'script.sh',
         contentType: 'application/x-sh',
       });
@@ -237,10 +237,10 @@ describe('Tests for file edits and uploads', () => {
     expect(res.body.message).toBe('File uploaded successfully');
   });
 
-  it('POST /uploadFile return error when file format is not sh', async () => {
-    jest.resetModules(); // Limpia la cache de módulos para que los mocks surtan efecto
+  it('POST /uploadFile returns error when file format is not sh', async () => {
+    jest.resetModules(); // Clear module cache so mocks take effect
 
-    // Mock local de multer dentro del test
+    // Local mock for multer inside the test
     jest.doMock('multer', () => {
       return () => ({
         single: () => (req, res, next) => {
@@ -253,16 +253,16 @@ describe('Tests for file edits and uploads', () => {
       });
     });
 
-    // También mockeamos diskStorage en caso de que el código lo use
+    // Also mock diskStorage in case the code uses it
     const multer = require('multer');
     multer.diskStorage = jest.fn(() => ({}));
 
-    // Importamos app después de los mocks
+    // Import app after mocks
     const app = require('../app');
 
     const res = await request(app)
       .post('/uploadFile')
-      .attach('file', Readable.from(['contenido del archivo']), {
+      .attach('file', Readable.from(['file content']), {
         filename: 'script.txt',
         contentType: 'application/x-sh',
       });
