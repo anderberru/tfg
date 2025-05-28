@@ -1,4 +1,5 @@
 jest.mock('fs');
+
 jest.mock('child_process', () => {
   const EventEmitter = require('events');
 
@@ -33,11 +34,15 @@ jest.mock('child_process', () => {
 });
 
 const fs = require('fs');
+const path = require('path');
 const request = require('supertest');
 const express = require('express');
 const { router } = require('../routes/index'); // adjust the path according to your file location
-
+const multer = require('multer');
+const os = require('os');
+const { Readable } = require('stream');
 const indexRoutes = require('../routes/index');
+
 
 // Only simulate .emit without changing structure
 beforeAll(() => {
@@ -56,7 +61,13 @@ describe('Vagrant related routes', () => {
       const res = await request(app).get('/checkTools');
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty('vagrant');
+      expect(res.body.vagrant).toHaveProperty('installed', true);
+      expect(res.body.vagrant).toHaveProperty('version');
+      expect(res.body.vagrant.version).toEqual('Vagrant 2.3.7');
       expect(res.body).toHaveProperty('virtualbox');
+      expect(res.body.virtualbox).toHaveProperty('installed', true);
+      expect(res.body.virtualbox).toHaveProperty('version');
+      expect(res.body.virtualbox.version).toEqual('7.0.10r158379');
     });
   });
 
@@ -114,6 +125,7 @@ describe('Vagrant related routes', () => {
       expect(res.statusCode).toBe(200);
       expect(res.body.message).toContain('VAGRANT DESTROY PROCESS');
       expect(res.body.message).toContain('Simulating output');
+      expect(res.body.message).toContain('Simulating error');
     });
   });
 
@@ -123,6 +135,7 @@ describe('Vagrant related routes', () => {
       expect(res.statusCode).toBe(200);
       expect(res.body.message).toContain('VAGRANT HALT PROCESS');
       expect(res.body.message).toContain('Simulating output');
+      expect(res.body.message).toContain('Simulating error');
     });
   });
 
@@ -153,7 +166,7 @@ describe('Vagrant related routes', () => {
 
 });
 
-describe('Tests for /readParameters and /saveParameters', () => {
+describe('Tests for file edits and uploads', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -189,4 +202,74 @@ describe('Tests for /readParameters and /saveParameters', () => {
       expect.any(Function)
     );
   });
+
+  it('POST /uploadFile uploads a file', async () => {
+    jest.resetModules(); // Limpia la cache de módulos para que los mocks surtan efecto
+
+    // Mock local de multer dentro del test
+    jest.doMock('multer', () => {
+      return () => ({
+        single: () => (req, res, next) => {
+          req.file = {
+            originalname: 'script.sh',
+            path: '/fake/path/script.sh',
+          };
+          next();
+        }
+      });
+    });
+
+    // También mockeamos diskStorage en caso de que el código lo use
+    const multer = require('multer');
+    multer.diskStorage = jest.fn(() => ({}));
+
+    // Importamos app después de los mocks
+    const app = require('../app');
+
+    const res = await request(app)
+      .post('/uploadFile')
+      .attach('file', Readable.from(['contenido del archivo']), {
+        filename: 'script.sh',
+        contentType: 'application/x-sh',
+      });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.message).toBe('File uploaded successfully');
+  });
+
+  it('POST /uploadFile return error when file format is not sh', async () => {
+    jest.resetModules(); // Limpia la cache de módulos para que los mocks surtan efecto
+
+    // Mock local de multer dentro del test
+    jest.doMock('multer', () => {
+      return () => ({
+        single: () => (req, res, next) => {
+          req.file = {
+            originalname: 'script.txt',
+            path: '/fake/path/script.txt',
+          };
+          next();
+        }
+      });
+    });
+
+    // También mockeamos diskStorage en caso de que el código lo use
+    const multer = require('multer');
+    multer.diskStorage = jest.fn(() => ({}));
+
+    // Importamos app después de los mocks
+    const app = require('../app');
+
+    const res = await request(app)
+      .post('/uploadFile')
+      .attach('file', Readable.from(['contenido del archivo']), {
+        filename: 'script.txt',
+        contentType: 'application/x-sh',
+      });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toBe('Only .sh files are allowed');
+  });
+
+
 });

@@ -29,7 +29,15 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage });
+const fileFilter = function (req, file, cb) {
+  if (file.originalname.endsWith('.sh')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only .sh files are allowed!'), false);
+  }
+};
+
+const upload = multer({ storage, fileFilter });
 
 function writeJsonFile(filePath, data) {
   fs.writeFile(filePath, JSON.stringify(data, null, 2), (err) => {
@@ -325,6 +333,10 @@ router.get('/vagrantHalt', function(req, res, next) {
 router.post('/uploadFile', upload.single('file'), function (req, res) {
   console.log('uploadFile endpoint hit');
   console.log('Archivo recibido:', req.file);
+
+  if (!req.file.originalname.endsWith('.sh')) {
+    return res.status(400).json({ error: 'Only .sh files are allowed' });
+  }
 
   if (!req.file) {
     return res.status(400).json({ error: 'No se recibió ningún archivo.' });
