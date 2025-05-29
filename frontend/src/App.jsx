@@ -281,6 +281,39 @@ function App() {
     }
   }
 
+  function UploadFileButton({ name, script, app_state, upload_file, remove_script }) {
+    const fileInputRef = useRef();
+    return (
+      <>
+        <p>Custom script: {script}</p>
+        <button
+          disabled={app_state !== "not created"}
+          onClick={() => fileInputRef.current && fileInputRef.current.click()}
+        >
+          {script === "" ? "Upload Script" : "Change Script"}
+        </button>
+        <input
+          ref={fileInputRef}
+          id={`file-upload-${name}`}
+          type="file"
+          style={{ display: "none" }}
+          onChange={(event) => {
+            upload_file(event, name);
+            event.target.value = null;
+          }}
+        />
+        {script !== "" && (
+          <button
+            disabled={app_state !== "not created"}
+            onClick={() => remove_script(name)}
+          >
+            Delete Script
+          </button>
+        )}
+      </>
+    );
+  }
+
   function v_box(name, state, isFirewall, script, isBad) {
     return (
       <div className="v-box">
@@ -289,7 +322,13 @@ function App() {
         <p>Is Firewall: {isFirewall ? "Yes" : "No"}</p>
         <button disabled={state != "running"} onClick={() => open_vm_console(name)}>Open Console</button>
         {delete_vm_button(name)}
-        {upload_file_button(name, script)}
+        <UploadFileButton
+          name={name}
+          script={script}
+          app_state={app_state}
+          upload_file={upload_file}
+          remove_script={remove_script}
+        />
         {bad_client_button(name, isBad)}
       </div>
     )
@@ -302,52 +341,6 @@ function App() {
     return (
       <button disabled={app_state != "not created"} onClick={() => remove_vm(name)}>Delete</button>
     )
-  }
-
-  function upload_file_button(name, script) {
-    if (script === "") {
-      return (
-        <>
-        <p>Custom script: {script}</p>
-        <button
-            disabled={app_state !== "not created"}
-            onClick={() => document.getElementById(`file-upload-${name}`).click()}
-          >
-            Upload Script
-          </button>
-          <input
-            id={`file-upload-${name}`}
-            type="file"
-            style={{ display: "none" }}
-            onChange={(event) => upload_file(event, name)}
-          />
-        </>
-      ) 
-    } else {
-        return (
-          <>
-            <p>Custom script: {script}</p>
-            <button
-                disabled={app_state !== "not created"}
-                onClick={() => document.getElementById(`file-upload-${name}`).click()}
-              >
-                Change Script
-              </button>
-              <input
-                id={`file-upload-${name}`}
-                type="file"
-                style={{ display: "none" }}
-                onChange={(event) => upload_file(event, name)}
-              />
-              <button
-                disabled={app_state !== "not created"}
-                onClick={() => remove_script(name)}
-              >
-                Delete Script
-              </button>
-            </>
-        )
-      }
   }
 
   function set_isBad(name, isBad) {
