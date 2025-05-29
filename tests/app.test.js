@@ -23,8 +23,8 @@ jest.mock('child_process', () => {
 
       // Controlled event emission inside the mock
       setImmediate(() => {
-        mockProcess.stdout.emit('data', 'Simulated output\n');
         mockProcess.stderr.emit('data', 'Simulated error\n');
+        mockProcess.stdout.emit('data', 'Simulated output\n');
         mockProcess.emit('close', 0);
       });
 

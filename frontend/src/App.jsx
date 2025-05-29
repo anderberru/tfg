@@ -31,6 +31,7 @@ function App() {
   const [virtualBoxVersion, setVirtualBoxVersion] = useState("")
   const [isVagrantInstalled, setIsVagrantInstalled] = useState(false)
   const [isVirtualBoxInstalled, setIsVirtualBoxInstalled] = useState(false)
+  const [isSaved, setIsSaved] = useState(true)
 
   const socket = io(); // Connects to the same host
 
@@ -93,14 +94,24 @@ function App() {
     fetch('/checkTools')
     .then(res => res.json())
     .then(data => {
+      let notInstalled = false;
       console.log('Installed tools:', data);
       setIsVagrantInstalled(data.vagrant.installed);
+      setIsVirtualBoxInstalled(data.virtualbox.installed);
       if (data.vagrant.installed) {
         setVagrantVersion(data.vagrant.version);
+      } else {
+        setPageLoaded(true);
+        notInstalled = true;
       }
-      setIsVirtualBoxInstalled(data.virtualbox.installed);
       if (data.virtualbox.installed) {
         setVirtualBoxVersion(data.virtualbox.version);
+      } else {
+        setPageLoaded(true);
+        notInstalled = true;
+      }
+      if (notInstalled) {
+        return Promise.reject("VirtualBox is not installed");
       }
     }).then(() => {
       read_parameters()
@@ -181,49 +192,56 @@ function App() {
     return (
       <>
       <div>
-      <h1>Cluster Manager</h1>
-      <p>Current state: {app_state}</p>
-      {render_vm_list()}
-      <label>
-      Cluster type:
-      <select
-        disabled={app_state != "not created"}
-        value={learning}
-        onChange={(e) => {
-        setLearning(e.target.value)
-        }}
-      >
-        <option value="0">DMZ</option>
-        <option value="1">Distributed Machine Learning</option>
-      </select>
-      </label>
-      <label>
-      LAN Subnet:
-      <input
-        disabled={app_state != "not created"}
-        type="checkbox"
-        checked={lan_subnet === 1}
-        onChange={(e) => {
-        setLan_subnet(e.target.checked ? 1 : 0);
-        }}
-      />
-      </label>
-      <label>
-      DMZ Type:
-      <select
-        disabled={app_state != "not created"}
-        value={dmz_type}
-        onChange={(e) => {
-        setDmz_type(e.target.value)
-        }}
-      >
-        <option value="0">Simple</option>
-        <option value="1">Dual firewall</option>
-      </select>
-      </label>
-      <br /><br />
-      {buttons()}
-      <OutputConsole output_full={output} processComplete={processComplete} />
+        <h1>Cluster Manager</h1>
+        <p>Current state: {app_state}</p>
+        {render_vm_list()}
+        <label>
+        Cluster type:
+        <select
+          disabled={app_state != "not created"}
+          value={learning}
+          onChange={(e) => {
+          setLearning(e.target.value);
+          setIsSaved(false);
+          }}
+        >
+          <option value="0">DMZ</option>
+          <option value="1">Distributed Machine Learning</option>
+        </select>
+        </label>
+        {Number(learning) === 0 && (
+        <>
+          <label>
+          LAN Subnet:
+          <input
+            disabled={app_state != "not created"}
+            type="checkbox"
+            checked={lan_subnet === 1}
+            onChange={(e) => {
+            setLan_subnet(e.target.checked ? 1 : 0);
+            setIsSaved(false);
+            }}
+          />
+          </label>
+          <label>
+          DMZ Type:
+          <select
+            disabled={app_state != "not created"}
+            value={dmz_type}
+            onChange={(e) => {
+            setDmz_type(e.target.value);
+            setIsSaved(false);
+            }}
+          >
+            <option value="0">Simple</option>
+            <option value="1">Dual firewall</option>
+          </select>
+          </label>
+        </>
+        )}
+        <br /><br />
+        {buttons()}
+        <OutputConsole output_full={output} processComplete={processComplete} />
       </div>
       </>
     )
@@ -234,7 +252,9 @@ function App() {
       return (
         <div id="buttons">
           <button onClick={vagrant_up}>Create</button>
-          <button onClick={save_parameters}>Save config</button>
+          <button disabled={isSaved} onClick={save_parameters}>
+            {isSaved ? "Config saved" : "Save config"}
+          </button>
         </div>
       )
     } else if (app_state === "creating") {
@@ -441,6 +461,7 @@ function App() {
     } else if (name === "server") {
       setScript_server("")
     }
+    setIsSaved(false);
   }
 
   function render_vm_list() {
@@ -700,6 +721,7 @@ function App() {
     }
     const newVmName = name + (count + 1).toString()
     setVm_list((prevList) => [...prevList, new VMachine(newVmName, "not created", false, "")]);
+    setIsSaved(false);
   }
 
   function remove_vm(name) {
@@ -733,6 +755,7 @@ function App() {
       });
       return updatedList;
     });
+    setIsSaved(false);
   }
 
   function open_vm_console(m_name) {
@@ -782,6 +805,7 @@ function App() {
 
       const data = await response.json();
       console.log('Save parameters response:', data);
+      setIsSaved(true);
 
       return data;
     } catch (error) {
@@ -903,6 +927,7 @@ function App() {
       .then((data) => {
         console.log('File upload response:', data.message);
         // Handle the response from the server
+        setIsSaved(false);
       }
       )
       .catch((error) => {
@@ -1052,7 +1077,38 @@ function App() {
         </div>
       </>
     )
+  } else if (!isVagrantInstalled && !isVirtualBoxInstalled) {
+    return (
+      <>
+        {display_vagrant_vbox_version()}
+        <div className="loading-container">
+          <h1>Error: Vagrant and VirtualBox are not installed</h1>
+          <p>Please install both Vagrant and VirtualBox to use this application.</p>
+        </div>
+      </>
+    )
+  } else if (!isVagrantInstalled) {
+    return (
+      <>
+        {display_vagrant_vbox_version()}
+        <div className="loading-container">
+          <h1>Error: Vagrant is not installed</h1>
+          <p>Please install Vagrant to use this application.</p>
+        </div>
+      </>
+    )
+  } else if (!isVirtualBoxInstalled) {
+    return (
+      <>
+        {display_vagrant_vbox_version()}
+        <div className="loading-container">
+          <h1>Error: VirtualBox is not installed</h1>
+          <p>Please install VirtualBox to use this application.</p>
+        </div>
+      </>
+    )
   } else {
+    // Render the main application content
     return (
     <>
       {display_vagrant_vbox_version()}
