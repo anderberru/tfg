@@ -3,17 +3,17 @@
 ARCHIVO="/etc/mysql/mysql.conf.d/mysqld.cnf"
 BACKUP="/etc/mysql/mysql.conf.d/mysqld.cnf.bak"
 
-# Hacer backup por si acaso
+# Make a backup just in case
 sudo cp "$ARCHIVO" "$BACKUP"
 
-# Cambiar el bind-address a 0.0.0.0 si existe, si no, añadirlo
+# Change bind-address to 0.0.0.0 if it exists, otherwise add it
 if grep -q "^bind-address" "$ARCHIVO"; then
     sudo sed -i 's/^bind-address.*/bind-address = 0.0.0.0/' "$ARCHIVO"
 else
     echo "bind-address = 0.0.0.0" | sudo tee -a "$ARCHIVO"
 fi
 
-# Reiniciar MySQL
+# Restart MySQL
 sudo systemctl restart mysql
 
-echo "bind-address cambiado a 0.0.0.0 y MySQL reiniciado."
+echo "bind-address changed to 0.0.0.0 and MySQL restarted."

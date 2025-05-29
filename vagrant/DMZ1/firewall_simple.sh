@@ -1,4 +1,3 @@
-
 ip route add default via 192.168.1.1 dev eth3
 
 iptables -F
@@ -6,26 +5,26 @@ iptables -X
 iptables -Z
 iptables -t nat -F
 
-# Política por defecto: bloquear todo
+# Default policy: block everything
 #iptables -P INPUT DROP
 #iptables -P FORWARD DROP
 iptables -P OUTPUT ACCEPT
 
-# Permitir tráfico de lo que ya está establecido o relacionado
+# Allow traffic that is already established or related
 iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
 iptables -A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
 
-# Permitir acceso SSH y otros servicios necesarios al firewall desde LAN
+# Allow SSH access and other necessary services to the firewall from LAN
 iptables -A INPUT -s 10.10.10.0/24 -p tcp --dport 22 -j ACCEPT
 
 iptables -A FORWARD -p tcp --dport 8080 -d 10.10.20.10 -j ACCEPT
 iptables -t nat -A POSTROUTING -o eth3 -j MASQUERADE
 
-# Asegurar que el tráfico de la LAN A y LAN B se enrute correctamente
+# Ensure that traffic between LAN A and LAN B is routed correctly
 iptables -A FORWARD -s 10.10.10.0/25 -d 10.10.10.128/25 -j ACCEPT
 iptables -A FORWARD -s 10.10.10.128/25 -d 10.10.10.0/25 -j ACCEPT
 
-# Permitir acceso desde LAN (10.10.10.0/24) a la DMZ (10.10.20.0/24)
+# Allow access from LAN (10.10.10.0/24) to DMZ (10.10.20.0/24)
 #iptables -A FORWARD -s 10.10.10.0/24 -d 10.10.20.0/24 -j ACCEPT
 #iptables -A FORWARD -s 10.10.10.0/24 -d 10.10.20.0/24 -p icmp -j ACCEPT
 iptables -A FORWARD -s 10.10.10.0/25 -d 10.10.20.0/24 -j ACCEPT
@@ -42,56 +41,53 @@ iptables -A FORWARD -p tcp --dport 3306 -j ACCEPT
 iptables -A OUTPUT -p tcp --dport 3306 -d 10.10.10.10 -j ACCEPT
 iptables -A INPUT -p tcp --dport 3306 -s 10.10.10.10 -j ACCEPT
 
-
-# Permitir ICMP (ping) en el firewall
+# Allow ICMP (ping) on the firewall
 iptables -A INPUT -p icmp -j ACCEPT
 iptables -A FORWARD -p icmp -j ACCEPT
 
-# Permitir acceso SSH desde Internet al firewall (Opcional y peligroso, restringir si es posible)
+# Allow SSH access from the Internet to the firewall (Optional and dangerous, restrict if possible)
 iptables -A INPUT -p tcp --dport 22 -j ACCEPT
 
-# bloquear tráfico desde LANB A a DMZ
+# Block traffic from LANB A to DMZ
 iptables -A FORWARD -s 10.10.10.128/25 -d 10.10.20.0/24 -j DROP
 iptables -A FORWARD -s 10.10.10.128/25 -d 10.10.20.0/24 -p icmp -j DROP
 
-# Permitir acceso desde LAN (10.10.10.0/24) a la DMZ (10.10.20.0/24)
+# Allow access from LAN (10.10.10.0/24) to DMZ (10.10.20.0/24)
 iptables -A FORWARD -s 10.10.10.0/24 -d 10.10.20.0/24 -j ACCEPT
 iptables -A FORWARD -s 10.10.10.0/24 -d 10.10.20.0/24 -p tcp --dport 8080 -j ACCEPT
 
-# Reenviar el tráfico que llega al puerto 8080 del firewall a la IP de la DMZ
+# Forward traffic arriving at port 8080 of the firewall to the DMZ IP
 iptables -t nat -A PREROUTING -o eth2 -p tcp --dport 8080 -j DNAT --to-destination 10.10.20.10:8080
 iptables -t nat -A OUTPUT -o eth2 -p tcp --dport 8080 -j DNAT --to-destination 10.10.20.10:8080
 
-# Permitir que el tráfico hacia el puerto 8080 de la DMZ pase por el firewall
+# Allow traffic to port 8080 of the DMZ to pass through the firewall
 iptables -A FORWARD -p tcp -d 10.10.20.10 --dport 8080 -j ACCEPT
 
-# Permitir acceso desde Internet a DMZ (Ejemplo: HTTP y HTTPS)
+# Allow access from Internet to DMZ (Example: HTTP and HTTPS)
 iptables -A FORWARD -p tcp -d 10.10.20.10 --dport 80 -j ACCEPT
 iptables -A FORWARD -p tcp -d 10.10.20.10 --dport 443 -j ACCEPT
 
-# Permitir que el tráfico hacia el puerto 8080 de la DMZ pase por el firewall
+# Allow traffic to port 8080 of the DMZ to pass through the firewall
 iptables -A FORWARD -p tcp -d 10.10.20.0/24 --dport 8080 -j ACCEPT
 
-# Permitir acceso desde Internet a DMZ (Ejemplo: HTTP y HTTPS)
+# Allow access from Internet to DMZ (Example: HTTP and HTTPS)
 iptables -A FORWARD -p tcp -d 10.10.20.0/24 --dport 80 -j ACCEPT
 iptables -A FORWARD -p tcp -d 10.10.20.0/24 --dport 443 -j ACCEPT
 
-
-
-# Redirige tráfico del puerto 8080 de eth3 (host) hacia Tomcat en DMZ
+# Redirect traffic from port 8080 of eth3 (host) to Tomcat in DMZ
 iptables -t nat -A PREROUTING -i eth3 -p tcp --dport 8080 -j DNAT --to-destination 10.10.20.10:8080
 
-# Hace que las respuestas vuelvan correctamente al host
+# Ensure responses return correctly to the host
 iptables -t nat -A POSTROUTING -o eth2 -j MASQUERADE
 
-# Acepta el tráfico en FORWARD para permitir el paso al Tomcat
+# Accept FORWARD traffic to allow access to Tomcat
 iptables -A FORWARD -i eth3 -o eth2 -p tcp --dport 8080 -d 10.10.20.10 -j ACCEPT
 
-# Permitir NAT para que la DMZ y la LAN accedan a Internet
-iptables -t nat -A POSTROUTING -o eth3 -j MASQUERADE  # eth0 es la interfaz de Internet
+# Allow NAT so that DMZ and LAN can access the Internet
+iptables -t nat -A POSTROUTING -o eth3 -j MASQUERADE  # eth0 is the Internet interface
 
-# Bloquear tráfico desde DMZ a LAN
+# Block traffic from DMZ to LAN
 iptables -A FORWARD -s 10.10.20.0/24 -d 10.10.10.0/24 -j DROP
 
-# Habilitar el reenvío de paquetes (Forwarding)
+# Enable packet forwarding
 echo 1 > /proc/sys/net/ipv4/ip_forward

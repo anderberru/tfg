@@ -1,39 +1,48 @@
 def configure_cluster(config)
 
-  # Detectar sistema operativo y obtener interfaz con salida a Internet solo una vez
 if RUBY_PLATFORM =~ /linux/
   $default_iface = `ip route | grep default | awk '{print $5}'`.strip
-  raise "No se pudo detectar la interfaz de red en Linux" if $default_iface.empty?
+  raise "Could not detect network interface on Linux" if $default_iface.empty?
 
 elsif RUBY_PLATFORM =~ /mswin|mingw|cygwin/
   require 'win32ole'
   nic_names = []
   wmi = WIN32OLE.connect("winmgmts://")
-  wmi.ExecQuery("select * from Win32_NetworkAdapter where NetConnectionStatus = 2").each do |nic|
-    nic_names << nic.NetConnectionID
+  wmi.ExecQuery("select * from Win32_NetworkAdapterConfiguration where IPEnabled = true").each do |nic|
+    nic_names << nic.Description
   end
-  $default_iface = nic_names.find { |n| n&.downcase&.include?("wi-fi") } || nic_names.first
-  raise "No se pudo detectar interfaz de red conectada" if $default_iface.nil?
+
+  # Look for an interface containing something like 'wi-fi'
+  $default_iface = nic_names.find { |n| n.downcase.include?("wi-fi") || n.downcase.include?("wireless") }
+
+  # If there is no Wi-Fi, use the first available with IP
+  $default_iface ||= nic_names.first
+
+  if $default_iface.nil?
+    puts "Could not automatically detect the interface. Vagrant will ask for it."
+  else
+    puts "Detected interface: #{$default_iface}"
+  end
 
 else
-  raise "Sistema operativo no soportado para detección automática de interfaz"
+  raise "Operating system not supported for automatic interface detection"
 end
 
 
-    # Firewall/Gateway (conecta LAN, DMZ e Internet)
+    # Firewall/Gateway (connects LAN, DMZ, and Internet)
     config.vm.define "firewall1" do |fw1|
       fw1.vm.box = $BOX_IMAGE
       fw1.vm.hostname = "firewall1"
       if $DUAL_FIREWALL == 1
         fw1.vm.network "private_network", type: "static", ip: "10.10.30.1" # firewall2
       else
-        fw1.vm.network "private_network", type: "static", ip: "10.10.10.5" # Red LAN
+        fw1.vm.network "private_network", type: "static", ip: "10.10.10.5" # LAN network
       end
-      fw1.vm.network "private_network", type: "static", ip: "10.10.20.5" # Red DMZ
+      fw1.vm.network "private_network", type: "static", ip: "10.10.20.5" # DMZ network
       
       
 
-      # Usar la interfaz detectada en public_network
+      # Use the detected interface in public_network
       fw1.vm.network "public_network", bridge: $default_iface
 
       if $SCRIPT_FIREWALL1 != ""
@@ -51,8 +60,8 @@ end
       config.vm.define "firewall2" do |fw2|
         fw2.vm.box = $BOX_IMAGE
         fw2.vm.hostname = "firewall2"
-        fw2.vm.network "private_network", type: "static", ip: "10.10.10.4" # Red LAN
-        fw2.vm.network "private_network", type: "static", ip: "10.10.20.4" # Red DMZ
+        fw2.vm.network "private_network", type: "static", ip: "10.10.10.4" # LAN network
+        fw2.vm.network "private_network", type: "static", ip: "10.10.20.4" # DMZ network
         fw2.vm.network "private_network", type: "static", ip: "10.10.30.2" # firewall1
 
         if $SCRIPT_FIREWALL2 != ""
@@ -64,7 +73,7 @@ end
     end
     
 
-    # Servidor en la DMZ (accesible desde el exterior y la LAN)
+    # Server in the DMZ (accessible from outside and the LAN)
     config.vm.define "dmz" do |dmz|
       dmz.vm.box = $BOX_IMAGE
       dmz.vm.hostname = "dmz"
@@ -141,11 +150,11 @@ end
       end
     end
 
-    # Servidor en la LAN (solo acceso interno)
+    # Server in the LAN (internal access only)
     config.vm.define "lan" do |lan|
       lan.vm.box = $BOX_IMAGE
       lan.vm.hostname = "lan"
-      lan.vm.network "private_network", type: "static", ip: "10.10.10.10" # Red interna (LAN)
+      lan.vm.network "private_network", type: "static", ip: "10.10.10.10" # Internal network (LAN)
       
       lan.vm.provision "shell", inline: <<-SHELL
         apt-get update
@@ -175,11 +184,11 @@ end
 
 
     (1..$NODE_COUNT_LAN).each do |i|
-      # Servidor en la LAN (solo acceso interno)
+      # Server in the LAN (internal access only)
       config.vm.define "lan#{i}" do |lan|
         lan.vm.box = $BOX_IMAGE
         lan.vm.hostname = "lan#{i}"
-        lan.vm.network "private_network", type: "static", ip: "10.10.10.#{i + 10}" # Red interna (LAN)
+        lan.vm.network "private_network", type: "static", ip: "10.10.10.#{i + 10}" # Internal network (LAN)
         
         lan.vm.provision "shell", inline: <<-SHELL
           apt-get update

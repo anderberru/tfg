@@ -17,7 +17,7 @@ iptables -A INPUT -p tcp --dport 3306 -j ACCEPT
 iptables -A INPUT -s 10.10.20.0/24 -p tcp --dport 3306 -j ACCEPT
 
 
-# Permitir acceso SSH a la DMZ (para vagrant ssh)
+# Allow SSH access to the DMZ (for vagrant ssh)
 iptables -A INPUT -p tcp --dport 22 -j ACCEPT
 
 echo 1 > /proc/sys/net/ipv4/ip_forward

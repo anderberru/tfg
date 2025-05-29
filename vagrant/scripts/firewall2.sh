@@ -5,34 +5,33 @@ apt-get install -y traceroute
 ip route add 10.10.0.0/16 via 10.10.30.1
 #ip route add 10.10.10.0/25 dev eth4
 #ip route add 10.10.10.128/25 dev eth5
-# Limpiar reglas previas
+# Clear previous rules
 iptables -F
 iptables -X
 iptables -Z
 iptables -t nat -F
 
-# Política por defecto: bloquear todo
+# Default policy: block everything
 #iptables -P INPUT DROP
 #iptables -P FORWARD DROP
 iptables -P OUTPUT ACCEPT
 
-# Permitir tráfico de lo que ya está establecido o relacionado
+# Allow traffic that is already established or related
 iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
 iptables -A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
 
-# Permitir acceso SSH y otros servicios necesarios al firewall desde LAN
+# Allow SSH access and other necessary services to the firewall from LAN
 iptables -A INPUT -s 10.10.10.0/24 -p tcp --dport 22 -j ACCEPT
 
-
-# Asegurar que el tráfico de la LAN A y LAN B se enrute correctamente
+# Ensure that traffic between LAN A and LAN B is routed correctly
 iptables -A FORWARD -s 10.10.10.0/25 -d 10.10.10.128/25 -j ACCEPT
 iptables -A FORWARD -s 10.10.10.128/25 -d 10.10.10.0/25 -j ACCEPT
 
-# bloquear tráfico desde LANB A a DMZ
+# Block traffic from LAN B to DMZ
 iptables -A FORWARD -s 10.10.10.128/25 -d 10.10.20.0/24 -j DROP
 iptables -A FORWARD -s 10.10.10.128/25 -d 10.10.20.0/24 -p icmp -j DROP
 
-# Permitir acceso desde LAN (10.10.10.0/24) a la DMZ (10.10.20.0/24)
+# Allow access from LAN (10.10.10.0/24) to DMZ (10.10.20.0/24)
 #iptables -A FORWARD -s 10.10.10.0/24 -d 10.10.20.0/24 -j ACCEPT
 #iptables -A FORWARD -s 10.10.10.0/24 -d 10.10.20.0/24 -p icmp -j ACCEPT
 iptables -A FORWARD -s 10.10.10.0/25 -d 10.10.20.0/24 -j ACCEPT
@@ -43,18 +42,15 @@ iptables -A FORWARD -p tcp --dport 3306 -j ACCEPT
 iptables -A OUTPUT -p tcp --dport 3306 -d 10.10.10.10 -j ACCEPT
 iptables -A INPUT -p tcp --dport 3306 -s 10.10.10.10 -j ACCEPT
 
-
-# Bloquear tráfico desde DMZ a LAN
+# Block traffic from DMZ to LAN
 iptables -A FORWARD -s 10.10.20.0/24 -d 10.10.10.0/24 -j DROP
 
-# Permitir ICMP (ping) en el firewall
+# Allow ICMP (ping) on the firewall
 iptables -A INPUT -p icmp -j ACCEPT
 iptables -A FORWARD -p icmp -j ACCEPT
 
-# Permitir acceso SSH desde Internet al firewall (Opcional y peligroso, restringir si es posible)
+# Allow SSH access from the Internet to the firewall (Optional and dangerous, restrict if possible)
 iptables -A INPUT -p tcp --dport 22 -j ACCEPT
 
-
-
-# Habilitar el reenvío de paquetes (Forwarding)
+# Enable packet forwarding
 echo 1 > /proc/sys/net/ipv4/ip_forward

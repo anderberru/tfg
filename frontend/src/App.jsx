@@ -958,6 +958,7 @@ function App() {
       })
       .catch((error) => {
         console.error('Error:', error)
+        alert('An error occurred while starting Vagrant. Please check the console for details. You should destroy the cluster and try again.');
       })
   }
 
@@ -989,6 +990,7 @@ function App() {
       })
       .catch((error) => {
         console.error('Error:', error)
+        alert('An error occurred while stopping Vagrant. Please check the console for details.');
       })
 
   }
@@ -1008,6 +1010,7 @@ function App() {
       })
       .catch((error) => {
         console.error('Error:', error)
+        alert('An error occurred while destroying Vagrant. Please check the console for details.');
       })
   }
 

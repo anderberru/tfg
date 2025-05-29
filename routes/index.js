@@ -159,6 +159,7 @@ router.get('/readParameters', function(req, res, next) {
 router.post('/vagrantUp', function (req, res, next) {
   try {
     console.log('vagrantUp endpoint hit');
+    let last_line = '';
 
     writeJsonFile(path.join(vagrantPath, 'parameters.json'), req.body);
 
@@ -169,6 +170,7 @@ router.post('/vagrantUp', function (req, res, next) {
 
     vagrantUp.stdout.on('data', (data) => {
       const line = data.toString();
+      last_line = line;
       output += line;
       console.log(line.trim());
       io.emit('vagrant-output', line);
@@ -177,6 +179,7 @@ router.post('/vagrantUp', function (req, res, next) {
     vagrantUp.stderr.on('data', (data) => {
       console.error(`stderr: ${data}`);
       output += 'stderr: ' + data.toString();
+      last_line = 'stderr: ' + data.toString();
       io.emit('vagrant-output', data.toString());
     });
 
@@ -186,8 +189,15 @@ router.post('/vagrantUp', function (req, res, next) {
       io.emit('vagrant-output', output);
       io.emit('process-complete', 'Vagrant up process finished');
 
-      output = "VAGRANT UP PROCESS:\n" + output + "\n";
+      output = "VAGRANT UP PROCESS:\n" + output + "\nVAGRANT UP PROCESS ENDED\n";
       try {
+        if (last_line.includes('stderr:')) {
+          console.error('Error in vagrant up:', last_line);
+          output += 'Error: ' + last_line;
+          res.status(500).json({ error: 'Error during vagrant up', message: output });
+          return;
+        }
+        console.log('Vagrant up completed successfully');
         res.json({ message: output });
       } catch (err) {
         console.error('Error sending response:', err);
@@ -208,9 +218,11 @@ router.get('/vmList', function(req, res, next) {
   const command = spawn('vagrant', ['status'], { cwd: vagrantPath });
   let vmList = [];
   let output = '';
+  let last_line = '';
 
   command.stdout.on('data', (data) => {
     line = data.toString();
+    last_line = line; // keep track of the last line
     output += line; // accumulate output
     vmList.push(line);
     console.log(`${line.trim()}`);
@@ -218,6 +230,8 @@ router.get('/vmList', function(req, res, next) {
 
   command.stderr.on('data', (data) => {
     console.error(`stderr: ${data}`);
+    //output += 'stderr: ' + data.toString(); // accumulate output
+    last_line = 'stderr: ' + data.toString(); // keep track of the last line
   });
 
   command.on('close', (code) => {
@@ -272,9 +286,11 @@ router.get('/vagrantDestroy', function(req, res, next) {
   io.emit('process-start', 'Destroying vagrant...');
 
   let output = '';
+  let last_line = '';
 
   command.stdout.on('data', (data) => {
     line = data.toString();
+    last_line = line; // keep track of the last line
     output += line; // accumulate output
     console.log(`${line.trim()}`);
     io.emit('vagrant-output', line);
@@ -283,6 +299,7 @@ router.get('/vagrantDestroy', function(req, res, next) {
   command.stderr.on('data', (data) => {
     console.error(`stderr: ${data}`);
     output += 'stderr: ' + data.toString(); // accumulate output
+    last_line = 'stderr: ' + data.toString(); // keep track of the last line
     io.emit('vagrant-output', data.toString());
   });
 
@@ -291,7 +308,13 @@ router.get('/vagrantDestroy', function(req, res, next) {
     //console.log('File list:', lines);
     console.log('Vagrant destroy process finished');
     io.emit('process-complete', 'Vagrant destroy process finished');
-    output = "VAGRANT DESTROY PROCESS:\n" + output + "\n";
+    output = "VAGRANT DESTROY PROCESS:\n" + output + "\nVAGRANT DESTROY PROCESS ENDED\n";
+    if (last_line.includes('stderr:')) {
+      console.error('Error in vagrant destroy:', last_line);
+      output += 'Error: ' + last_line;
+      res.status(500).json({ error: 'Error during vagrant destroy', message: output });
+      return;
+    }
     res.json({ message: output });
   });
 
@@ -304,9 +327,11 @@ router.get('/vagrantHalt', function(req, res, next) {
   io.emit('process-start', 'Halting vagrant...');
 
   let output = '';
+  let last_line = '';
 
   command.stdout.on('data', (data) => {
     line = data.toString();
+    last_line = line; // keep track of the last line
     output += line; // accumulate output
     console.log(`${line.trim()}`);
     io.emit('vagrant-output', line);
@@ -315,6 +340,7 @@ router.get('/vagrantHalt', function(req, res, next) {
   command.stderr.on('data', (data) => {
     console.error(`stderr: ${data}`);
     output += 'stderr: ' + data.toString(); // accumulate output
+    last_line = 'stderr: ' + data.toString(); // keep track of the last line
     io.emit('vagrant-output', data.toString());
   });
 
@@ -323,7 +349,13 @@ router.get('/vagrantHalt', function(req, res, next) {
     //console.log('File list:', lines);
     console.log('Vagrant halt process finished');
     io.emit('process-complete', 'Vagrant halt process finished');
-    output = "VAGRANT HALT PROCESS:\n" + output + "\n";
+    output = "VAGRANT HALT PROCESS:\n" + output + "\nVAGRANT HALT PROCESS ENDED\n";
+    if (last_line.includes('stderr:')) {
+      console.error('Error in vagrant halt:', last_line);
+      output += 'Error: ' + last_line;
+      res.status(500).json({ error: 'Error during vagrant halt', message: output });
+      return;
+    }
     res.json({ message: output });
   });
 
