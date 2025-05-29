@@ -1,8 +1,18 @@
+body {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+  color: #222;
+  margin: 0;
+  padding: 0;
+}
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  min-height: unset;
 }
 
 .logo {
@@ -35,6 +45,16 @@
 
 .card {
   padding: 2em;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px 0 rgba(60, 72, 88, 0.12);
+  margin: 2em auto;
+  max-width: 400px;
+  transition: box-shadow 0.2s;
+}
+
+.card:hover {
+  box-shadow: 0 8px 32px 0 rgba(60, 72, 88, 0.18);
 }
 
 .read-the-docs {
@@ -42,36 +62,167 @@
 }
 
 .v-box {
-  background-color: 1px solid #cccccc86;
-  border: 1px solid #ccc;
-  padding: 1rem;
-  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px 0 rgba(60, 72, 88, 0.10);
+  min-width: 220px;
+  max-width: 300px;
+  margin: 0.5em 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: box-shadow 0.2s;
+}
+
+.v-box:hover {
+  box-shadow: 0 6px 24px 0 rgba(60, 72, 88, 0.16);
 }
 
 .vm-list {
   display: flex;
-  flex-wrap: wrap; /* Opcional: permite que pasen a la siguiente línea si no caben */
-  gap: 16px; /* Espacio entre las cajas */
-  justify-content: center; /* Opcional: centra horizontalmente */
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: center;
+  margin-bottom: 2em;
+}
+
+button {
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7em 1.5em;
+  margin: 0.5em 0.3em;
+  font-size: 1em;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 8px 0 rgba(60, 72, 88, 0.10);
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+}
+
+button:disabled {
+  background: #bdbdbd;
+  color: #f5f5f5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+button:not(:disabled):hover {
+  background: linear-gradient(90deg, #5a67d8 0%, #6b47b6 100%);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 4px 16px 0 rgba(60, 72, 88, 0.16);
+}
+
+label {
+  display: inline-block;
+  margin: 0.5em 1em 0.5em 0;
+  font-weight: 500;
+}
+
+input[type="checkbox"] {
+  accent-color: #667eea;
+  margin-left: 0.5em;
+}
+
+select {
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  padding: 0.4em 1em;
+  font-size: 1em;
+  margin-left: 0.5em;
+  background: #f5f7fa;
+  transition: border 0.2s;
+}
+
+select:focus {
+  border: 1.5px solid #667eea;
+  outline: none;
 }
 
 .console { 
-  background: #000;
-  color: rgb(255, 255, 255);
+  background: #181c20;
+  color: #e0e0e0;
   padding: 1rem; 
-  height: 300px; 
+  height: 320px; 
   overflow: auto; 
-  text-align: left; /* Alinea el texto a la izquierda */
-  white-space: pre-wrap; /* Permite que el texto se ajuste y haga saltos de línea */
-  word-wrap: break-word; /* Rompe palabras largas si es necesario */
+  text-align: left;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  border-radius: 10px;
+  font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
+  font-size: 1em;
+  box-shadow: 0 2px 12px 0 rgba(60, 72, 88, 0.10);
+  margin: 1.5em 0;
 }
 
 .version-info {
   color: #888;
-  font-size: 0.5em;
+  font-size: 0.95em;
   position: absolute;
   top: 1rem;
   left: 1rem;
   margin: 0;
   text-align: left;
+  background: rgba(255,255,255,0.85);
+  padding: 0.7em 1.2em;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px 0 rgba(60, 72, 88, 0.08);
+}
+
+h1, h2 {
+  font-weight: 700;
+  letter-spacing: -1px;
+  margin-bottom: 0.5em;
+}
+
+h1 {
+  font-size: 2.2em;
+  color: #4b3fa7;
+}
+
+h2 {
+  font-size: 1.3em;
+  color: #667eea;
+}
+
+.firewalls-section, .lan-section, .dmz-section, .server-section, .client-section, .lanB-section {
+  background: rgba(255,255,255,0.95);
+  border-radius: 12px;
+  padding: 1.2em 1em 1em 1em;
+  margin-bottom: 1.5em;
+  box-shadow: 0 2px 8px 0 rgba(60, 72, 88, 0.08);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  background: #e0e0e0;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #bdbdbd;
+  border-radius: 8px;
+}
+
+/* Loading block styles */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: unset;
+  height: auto;
+  margin: 0 auto;
+  max-width: 400px;
+  background: rgba(255,255,255,0.95);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px 0 rgba(60, 72, 88, 0.08);
+  padding: 2em 1em;
+}
+
+.loading-container h1 {
+  font-size: 2em;
+  margin: 0.5em 0 0 0;
+  color: #667eea;
 }
