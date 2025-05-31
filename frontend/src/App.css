@@ -67,7 +67,7 @@ body {
   padding: 0.5rem 0.75rem;
   border-radius: 10px;
   box-shadow: 0 1px 6px rgba(60, 72, 88, 0.08);
-  min-width: 160px;
+  min-width: 10px;
   max-width: 200px;
   margin: 0.25em;
   display: flex;
@@ -75,6 +75,15 @@ body {
   align-items: center;
   font-size: 0.85rem;
   transition: box-shadow 0.2s;
+  gap: 0;
+}
+
+.v-box.popup {
+  position: absolute;
+  transform: translateY(80%);
+  z-index: 1000;
+  box-shadow: 0 4px 16px rgba(60, 72, 88, 0.18);
+  pointer-events: auto;
 }
 
 .v-box:hover {

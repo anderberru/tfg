@@ -4,7 +4,7 @@ import viteLogo from '/vite.svg'
 import './App.css'
 import { io } from 'socket.io-client';
 import VMachine from './VMachine'
-import { Terminal, Trash2, Upload, X, Plus } from 'lucide-react';
+import { Terminal, Trash2, Upload, X, Plus, MoreHorizontal } from 'lucide-react';
 import firewallImg from './assets/firewall.png';
 import nodeImg from './assets/node.png';
 
@@ -48,15 +48,15 @@ function App() {
 
         // Save if it was at the bottom before updating
         const isNearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 30;
-
-        setOutput(prev => prev + data);
-
-        // Wait for the next render to scroll if necessary
+         // Wait for the next render to scroll if necessary
         requestAnimationFrame(() => {
           if (isNearBottom) {
             el.scrollTop = el.scrollHeight;
           }
         });
+
+        setOutput(prev => prev + data);
+
       };
 
       socket.on('vagrant-output', handleOutput);
@@ -64,14 +64,13 @@ function App() {
     }, []);
     // Scroll when the process finishes
     useEffect(() => {
-      if (processComplete) {
-        const el = consoleRef.current;
+      const el = consoleRef.current;
         requestAnimationFrame(() => {
           if (el) {
             el.scrollTop = el.scrollHeight;
           }
         });
-      } else {
+      if (!processComplete) {
         setOutput(output_full);
       }
     }, [processComplete, output_full]);
@@ -356,7 +355,6 @@ function App() {
           {" " + name + " "}
           {delete_vm_button(name)}
         </h2>
-        <p>{state}</p>
         <p>
           {isFirewall ? (
             <img className='vm_image' src={firewallImg} alt="Firewall" />
@@ -364,6 +362,17 @@ function App() {
             <img className='vm_image' src={nodeImg} alt="Machine" />
             )}
         </p>
+        <p>{state}</p>
+        <button title="More options" onClick={() => console.log('options')}><MoreHorizontal size={16} /></button>
+        {vm_more_options(name, isBad, state, script)}
+      </div>
+    )
+  }
+
+  function vm_more_options(name, isBad, state, script) {
+    return (
+      <>
+      <div className='v-box popup'>
         <UploadFileButton
           name={name}
           script={script}
@@ -372,7 +381,8 @@ function App() {
           remove_script={remove_script}
         />
         {bad_client_button(name, isBad)}
-      </div>
+        </div>
+      </>
     )
   }
 
