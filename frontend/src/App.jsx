@@ -4,6 +4,9 @@ import viteLogo from '/vite.svg'
 import './App.css'
 import { io } from 'socket.io-client';
 import VMachine from './VMachine'
+import { Terminal, Trash2, Upload, X, Plus } from 'lucide-react';
+import firewallImg from './assets/firewall.png';
+import nodeImg from './assets/node.png';
 
 function App() {
   const [pageLoaded, setPageLoaded] = useState(false)
@@ -302,46 +305,65 @@ function App() {
   }
 
   function UploadFileButton({ name, script, app_state, upload_file, remove_script }) {
-    const fileInputRef = useRef();
-    return (
-      <>
-        <p>Custom script: {script}</p>
+  const fileInputRef = useRef();
+
+  return (
+    <>
+      <p>Custom script: {script + " "}</p>
+      <div className="upload-buttons">
         <button
+          title={script === "" ? "Upload Script" : "Change Script"}
           disabled={app_state !== "not created"}
           onClick={() => fileInputRef.current && fileInputRef.current.click()}
         >
-          {script === "" ? "Upload Script" : "Change Script"}
+          <Upload size={16} />
         </button>
-        <input
-          ref={fileInputRef}
-          id={`file-upload-${name}`}
-          type="file"
-          style={{ display: "none" }}
-          onChange={(event) => {
-            upload_file(event, name);
-            event.target.value = null;
-          }}
-        />
+
         {script !== "" && (
           <button
+            title="Delete Script"
             disabled={app_state !== "not created"}
             onClick={() => remove_script(name)}
           >
-            Delete Script
+            <div className="icon-stack">
+              <Upload size={16} />
+              <X size={12} className="icon-overlay" />
+            </div>
           </button>
         )}
-      </>
-    );
-  }
+      </div>
+
+      <input
+        ref={fileInputRef}
+        id={`file-upload-${name}`}
+        type="file"
+        style={{ display: "none" }}
+        onChange={(event) => {
+          upload_file(event, name);
+          event.target.value = null;
+        }}
+      />
+    </>
+  );
+}
+
 
   function v_box(name, state, isFirewall, script, isBad) {
     return (
       <div className="v-box">
-        <h2>{name}</h2>
-        <p>State: {state}</p>
-        <p>Is Firewall: {isFirewall ? "Yes" : "No"}</p>
-        <button disabled={state != "running"} onClick={() => open_vm_console(name)}>Open Console</button>
-        {delete_vm_button(name)}
+        <h2>
+          <button title="Open VM console" disabled={state != "running"} onClick={() => open_vm_console(name)}><Terminal size={16} /></button>
+          {" " + name + " "}
+          {delete_vm_button(name)}
+        </h2>
+        <p>{state}</p>
+        <p>
+          {isFirewall ? (
+            <img className='vm_image' src={firewallImg} alt="Firewall" />
+            ) : (
+            <img className='vm_image' src={nodeImg} alt="Machine" />
+            )}
+        </p>
         <UploadFileButton
           name={name}
           script={script}
@@ -359,7 +381,7 @@ function App() {
       return;
     }
     return (
-      <button disabled={app_state != "not created"} onClick={() => remove_vm(name)}>Delete</button>
+      <button title="Delete machine" disabled={app_state != "not created"} onClick={() => remove_vm(name)}><Trash2 size={16} /></button>
     )
   }
 
@@ -541,8 +563,8 @@ function App() {
     return (
       <div className="cluster-diagram">
         <div className="group lan-group">
-          <h2>LAN Nodes</h2>
-          <button disabled={app_state !== "not created"} onClick={() => add_vm("lan")}>Add LAN Node</button>
+          <h2>LAN Network</h2>
+          <button title='Add LAN node' disabled={app_state !== "not created"} onClick={() => add_vm("lan")}><Plus size={16} /></button>
           {lanNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad))}
           {render_vm_list_lanB(lanBNodes)}
         </div>
@@ -553,8 +575,8 @@ function App() {
         </div>
 
         <div className="group dmz-group">
-          <h2>DMZ Nodes</h2>
-          <button disabled={app_state !== "not created"} onClick={() => add_vm("dmz")}>Add DMZ Node</button>
+          <h2>DMZ Network</h2>
+          <button title='Add DMZ node' disabled={app_state !== "not created"} onClick={() => add_vm("dmz")}><Plus size={16} /></button>
           {dmzNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad))}
         </div>
       </div>
@@ -572,7 +594,7 @@ function App() {
 
         <div className="group client-group">
           <h2>Client Nodes</h2>
-          <button disabled={app_state !== "not created"} onClick={() => add_vm("client")}>Add Client Node</button>
+          <button title='Add Client node' disabled={app_state !== "not created"} onClick={() => add_vm("client")}><Plus size={16} /></button>
           {clientNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad))}
         </div>
       </div>
@@ -585,8 +607,8 @@ function App() {
     if (lan_subnet != 0) {
       return (
         <div className="group lan-group">
-          <h2>LANB Nodes</h2>
-          <button disabled={app_state != "not created"} onClick={() => add_vm("lanB")}>Add LANB Node</button>
+          <h2>LANB Network</h2>
+          <button title='Add LanB node' disabled={app_state != "not created"} onClick={() => add_vm("lanB")}><Plus size={16} /></button>
           {list.map((vm) => (
             <div key={vm.name}>
               {v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad)}
