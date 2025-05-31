@@ -194,7 +194,7 @@ function App() {
       <div>
         <h1>Cluster Manager</h1>
         <p>Current state: {app_state}</p>
-        {render_vm_list()}
+        {render_vm_list2()}
         <label>
         Cluster type:
         <select
@@ -381,6 +381,7 @@ function App() {
       );
       return updatedList;
     });
+    setIsSaved(false);
   }
 
   function bad_client_button(name, isBad) {
@@ -530,19 +531,67 @@ function App() {
     }
   }
 
+  function render_vm_list2() {
+  if (learning != 1) {
+    const firewalls = vm_list.filter(vm => vm.name.includes('firewall'));
+    const lanNodes = vm_list.filter(vm => vm.name.includes('lan') && !vm.name.includes('lanB'));
+    const lanBNodes = vm_list.filter(vm => vm.name.includes('lanB'));
+    const dmzNodes = vm_list.filter(vm => vm.name.includes('dmz'));
+
+    return (
+      <div className="cluster-diagram">
+        <div className="group lan-group">
+          <h2>LAN Nodes</h2>
+          <button disabled={app_state !== "not created"} onClick={() => add_vm("lan")}>Add LAN Node</button>
+          {lanNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad))}
+          {render_vm_list_lanB(lanBNodes)}
+        </div>
+
+        <div className="group firewall-group">
+          <h2>Firewalls</h2>
+          {firewalls.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad))}
+        </div>
+
+        <div className="group dmz-group">
+          <h2>DMZ Nodes</h2>
+          <button disabled={app_state !== "not created"} onClick={() => add_vm("dmz")}>Add DMZ Node</button>
+          {dmzNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad))}
+        </div>
+      </div>
+    );
+  } else {
+    const servers = vm_list.filter(vm => vm.name.includes('server'));
+    const clientNodes = vm_list.filter(vm => vm.name.includes('client'));
+
+    return (
+      <div className="cluster-diagram">
+        <div className="group server-group">
+          <h2>Server</h2>
+          {servers.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad))}
+        </div>
+
+        <div className="group client-group">
+          <h2>Client Nodes</h2>
+          <button disabled={app_state !== "not created"} onClick={() => add_vm("client")}>Add Client Node</button>
+          {clientNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad))}
+        </div>
+      </div>
+    );
+  }
+}
+
+
   function render_vm_list_lanB(list) {
     if (lan_subnet != 0) {
       return (
-        <div className="vm-list">
-          <div className="lanB-section">
-            <h2>LANB Nodes</h2>
-            <button disabled={app_state != "not created"} onClick={() => add_vm("lanB")}>Add LANB Node</button>
-            {list.map((vm) => (
-              <div key={vm.name}>
-                {v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad)}
-              </div>
-            ))}
-          </div>
+        <div className="group lan-group">
+          <h2>LANB Nodes</h2>
+          <button disabled={app_state != "not created"} onClick={() => add_vm("lanB")}>Add LANB Node</button>
+          {list.map((vm) => (
+            <div key={vm.name}>
+              {v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad)}
+            </div>
+          ))}
         </div>
       )
     } else {

@@ -63,22 +63,50 @@ body {
 
 .v-box {
   background: #fff;
-  border: 1px solid #e0e0e0;
-  padding: 1.5rem;
-  border-radius: 16px;
-  box-shadow: 0 2px 12px 0 rgba(60, 72, 88, 0.10);
-  min-width: 220px;
-  max-width: 300px;
-  margin: 0.5em 0;
+  border: 1px solid #ccc;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  box-shadow: 0 1px 6px rgba(60, 72, 88, 0.08);
+  min-width: 160px;
+  max-width: 200px;
+  margin: 0.25em;
   display: flex;
   flex-direction: column;
   align-items: center;
+  font-size: 0.85rem;
   transition: box-shadow 0.2s;
 }
 
 .v-box:hover {
-  box-shadow: 0 6px 24px 0 rgba(60, 72, 88, 0.16);
+  box-shadow: 0 4px 12px rgba(60, 72, 88, 0.12);
 }
+
+.v-box h2 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.v-box p {
+  margin: 0.25rem 0;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.v-box button {
+  font-size: 0.75rem;
+  padding: 0.3em 0.6em;
+  margin: 0.25em 0;
+  border-radius: 6px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.v-box button:disabled {
+  background-color: #eaeaea;
+  cursor: not-allowed;
+}
+
 
 .vm-list {
   display: flex;
@@ -87,6 +115,31 @@ body {
   justify-content: center;
   margin-bottom: 2em;
 }
+
+.cluster-diagram {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 3em;
+  flex-wrap: wrap;
+  margin: 2em auto;
+  max-width: 1200px;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.group h2 {
+  margin-bottom: 0.5em;
+}
+
+.group > .v-box {
+  margin: 0.5em 0;
+}
+
 
 button {
   background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
