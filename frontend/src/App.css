@@ -80,10 +80,20 @@ body {
 
 .v-box.popup {
   position: absolute;
-  transform: translateY(80%);
   z-index: 1000;
   box-shadow: 0 4px 16px rgba(60, 72, 88, 0.18);
   pointer-events: auto;
+  transform: translateY(185%);
+  margin-top: 8px;
+}
+
+.v-box.popup2 {
+  position: absolute;
+  z-index: 1000;
+  box-shadow: 0 4px 16px rgba(60, 72, 88, 0.18);
+  pointer-events: auto;
+  transform: translateY(130%);
+  margin-top: 8px;
 }
 
 .v-box:hover {

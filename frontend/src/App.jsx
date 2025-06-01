@@ -347,43 +347,62 @@ function App() {
 }
 
 
-  function v_box(name, state, isFirewall, script, isBad) {
+  function v_box(name, state, isFirewall, script, isBad, show) {
     return (
       <div className="v-box">
-        <h2>
-          <button title="Open VM console" disabled={state != "running"} onClick={() => open_vm_console(name)}><Terminal size={16} /></button>
-          {" " + name + " "}
-          {delete_vm_button(name)}
-        </h2>
-        <p>
-          {isFirewall ? (
-            <img className='vm_image' src={firewallImg} alt="Firewall" />
-            ) : (
-            <img className='vm_image' src={nodeImg} alt="Machine" />
-            )}
-        </p>
-        <p>{state}</p>
-        <button title="More options" onClick={() => console.log('options')}><MoreHorizontal size={16} /></button>
-        {vm_more_options(name, isBad, state, script)}
+      <h2>
+        <button title="Open VM console" disabled={state != "running"} onClick={() => open_vm_console(name)}><Terminal size={16} /></button>
+        {" " + name + " "}
+        {delete_vm_button(name)}
+      </h2>
+      <p>
+        {isFirewall ? (
+        <img className='vm_image' src={firewallImg} alt="Firewall" />
+        ) : (
+        <img className='vm_image' src={nodeImg} alt="Machine" />
+        )}
+      </p>
+      <p>{state}</p>
+      <button
+        title={show ? "Close options" : "More options"}
+        onClick={() => enable_vm_menu(name)}
+      >
+        {show ? <X size={16} /> : <MoreHorizontal size={16} />}
+      </button>
+      {vm_more_options(name, isBad, state, script, show)}
       </div>
     )
   }
 
-  function vm_more_options(name, isBad, state, script) {
-    return (
-      <>
-      <div className='v-box popup'>
-        <UploadFileButton
-          name={name}
-          script={script}
-          app_state={app_state}
-          upload_file={upload_file}
-          remove_script={remove_script}
-        />
-        {bad_client_button(name, isBad)}
-        </div>
-      </>
-    )
+  function vm_more_options(name, isBad, state, script, show) {
+    if (show) {
+      return (
+        <>
+        <div className={name.includes("client") ? "v-box popup2" : "v-box popup"}>
+          <UploadFileButton
+            name={name}
+            script={script}
+            app_state={app_state}
+            upload_file={upload_file}
+            remove_script={remove_script}
+          />
+          {bad_client_button(name, isBad)}
+          </div>
+        </>
+      )
+    }
+  }
+
+  function enable_vm_menu(name) {
+    setVm_list((prevList) => {
+      const updatedList = prevList.map((vm) => {
+        if (vm.name === name) {
+          return new VMachine(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, !vm.showMenu);
+        }
+        return vm;
+      });
+      return updatedList;
+    });
   }
 
   function delete_vm_button(name) {
@@ -406,7 +425,7 @@ function App() {
     setVm_list((prevList) => {
       const updatedList = prevList.map((vm) => {
         if (vm.name === name) {
-          return new VMachine(name, vm.state, vm.isFirewall, vm.script, isBad);
+          return new VMachine(name, vm.state, vm.isFirewall, vm.script, isBad, vm.showMenu);
         }
         return vm;
       }
@@ -510,7 +529,7 @@ function App() {
             <h2>Firewalls</h2>
             {firewalls.map((vm) => (
               <div key={vm.name}>
-                {v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad)}
+                {v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu)}
               </div>
             ))}
           </div>
@@ -519,7 +538,7 @@ function App() {
             <button disabled={app_state != "not created"} onClick={() => add_vm("lan")}>Add LAN Node</button>
             {lanNodes.map((vm) => (
               <div key={vm.name}>
-                {v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad)}
+                {v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu)}
               </div>
             ))}
           </div>
@@ -529,7 +548,7 @@ function App() {
             <button disabled={app_state != "not created"} onClick={() => add_vm("dmz")}>Add DMZ Node</button>
             {dmzNodes.map((vm) => (
               <div key={vm.name}>
-                {v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad)}
+                {v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu)}
               </div>
             ))}
           </div>
@@ -545,7 +564,7 @@ function App() {
             <h2>Server</h2>
             {servers.map((vm) => (
               <div key={vm.name}>
-                {v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad)}
+                {v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu)}
               </div>
             ))}
           </div>
@@ -554,7 +573,7 @@ function App() {
             <button disabled={app_state != "not created"} onClick={() => add_vm("client")}>Add Client Node</button>
             {clientNodes.map((vm) => (
               <div key={vm.name}>
-                {v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad)}
+                {v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu)}
               </div>
             ))}
           </div>
@@ -575,19 +594,19 @@ function App() {
         <div className="group lan-group">
           <h2>LAN Network</h2>
           <button title='Add LAN node' disabled={app_state !== "not created"} onClick={() => add_vm("lan")}><Plus size={16} /></button>
-          {lanNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad))}
+          {lanNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu))}
           {render_vm_list_lanB(lanBNodes)}
         </div>
 
         <div className="group firewall-group">
           <h2>Firewalls</h2>
-          {firewalls.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad))}
+          {firewalls.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu))}
         </div>
 
         <div className="group dmz-group">
           <h2>DMZ Network</h2>
           <button title='Add DMZ node' disabled={app_state !== "not created"} onClick={() => add_vm("dmz")}><Plus size={16} /></button>
-          {dmzNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad))}
+          {dmzNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu))}
         </div>
       </div>
     );
@@ -599,13 +618,13 @@ function App() {
       <div className="cluster-diagram">
         <div className="group server-group">
           <h2>Server</h2>
-          {servers.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad))}
+          {servers.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu))}
         </div>
 
         <div className="group client-group">
           <h2>Client Nodes</h2>
           <button title='Add Client node' disabled={app_state !== "not created"} onClick={() => add_vm("client")}><Plus size={16} /></button>
-          {clientNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad))}
+          {clientNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu))}
         </div>
       </div>
     );
@@ -621,7 +640,7 @@ function App() {
           <button title='Add LanB node' disabled={app_state != "not created"} onClick={() => add_vm("lanB")}><Plus size={16} /></button>
           {list.map((vm) => (
             <div key={vm.name}>
-              {v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad)}
+              {v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu)}
             </div>
           ))}
         </div>
@@ -639,7 +658,7 @@ function App() {
           const isFirewall = (vmName === "firewall1" || vmName === "firewall2")
           const script = vm.script
   
-          return new VMachine(vmName, vmState, isFirewall, script, vm.isBad)
+          return new VMachine(vmName, vmState, isFirewall, script, vm.isBad);
       })
     setVm_list(vmList)
   }
@@ -918,7 +937,7 @@ function App() {
     setVm_list((prevList) => {
       const updatedList = prevList.map((vm) => {
         if (vm.name === name) {
-          return new VMachine(name, vm.state, vm.isFirewall, script);
+          return new VMachine(name, vm.state, vm.isFirewall, script, vm.isBad, vm.showMenu);
         }
         return vm;
       });

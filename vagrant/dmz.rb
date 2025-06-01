@@ -21,7 +21,7 @@ elsif RUBY_PLATFORM =~ /mswin|mingw|cygwin/
   if $default_iface.nil?
     puts "Could not automatically detect the interface. Vagrant will ask for it."
   else
-    puts "Detected interface: #{$default_iface}"
+    #puts "Detected interface: #{$default_iface}"
   end
 
 else
