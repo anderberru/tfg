@@ -68,7 +68,7 @@ body {
   border-radius: 10px;
   box-shadow: 0 1px 6px rgba(60, 72, 88, 0.08);
   min-width: 10px;
-  max-width: 200px;
+  max-width: 180px;
   margin: 0.25em;
   display: flex;
   flex-direction: column;
@@ -142,10 +142,32 @@ body {
   gap: 3em;
   flex-wrap: wrap;
   margin: 2em auto;
-  max-width: 1200px;
+  max-width: 2000px;
+}
+
+.diagram-lines {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 .group {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 1.5em;
+  box-shadow: 0 2px 8px 0 rgba(60, 72, 88, 0.08);
+  width: 300px;
+  max-width: 300px;
+  gap: 1em;
+}
+
+.group.firewall-group {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -153,6 +175,64 @@ body {
   border-radius: 12px;
   padding: 1.5em;
   box-shadow: 0 2px 8px 0 rgba(60, 72, 88, 0.08);
+  width: 300px;
+  max-width: 300px;
+  gap: 1em;
+}
+
+.lan-net {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 1.5em;
+  box-shadow: 0 2px 8px 0 rgba(60, 72, 88, 0.08);
+  width: 300px;
+  max-width: 300px;
+  gap: 1em;
+}
+
+.group > .v-box {
+  flex: 1 1 45%;
+  margin: 0.5em 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 48%;
+  box-sizing: border-box;
+}
+
+.group > .group.lanB-group {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 1.5em;
+  box-shadow: 0 2px 8px 0 rgba(60, 72, 88, 0.08);
+  width: 300px;
+  max-width: 300px;
+  gap: 1em;
+}
+
+.group > .group.lanB-group > .v-box {
+  flex: 1 1 45%;
+  margin: 0.5em 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 48%;
+  box-sizing: border-box;
+}
+
+.group_title {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  align-items: center;
 }
 
 .group h2 {
