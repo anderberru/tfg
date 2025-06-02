@@ -164,15 +164,8 @@ router.post('/vagrantUp', function (req, res, next) {
     writeJsonFile(path.join(vagrantPath, 'parameters.json'), req.body);
 
     vagrantUp = spawn('vagrant', ['up'], { cwd: vagrantPath });
-    
 
     let output = '';
-
-    vagrantUp.on('spawn', (code) => {
-      console.log('Vagrant up process started');
-      io.emit('vagrant-output', 'VAGRANT UP PROCESS STARTING...\n');
-    }
-    );
 
     vagrantUp.stdout.on('data', (data) => {
       const line = data.toString();
@@ -192,7 +185,7 @@ router.post('/vagrantUp', function (req, res, next) {
     vagrantUp.on('close', (code) => {
       const lines = output.trim().split('\n');
       console.log('Vagrant up process finished');
-      io.emit('vagrant-output', "\nVAGRANT UP PROCESS ENDED\n");
+      //io.emit('vagrant-output', "\nVAGRANT UP PROCESS ENDED\n");
       io.emit('process-complete', 'Vagrant up process finished');
 
       output = "VAGRANT UP PROCESS:\n" + output + "\nVAGRANT UP PROCESS ENDED\n";
@@ -289,15 +282,9 @@ router.get('/vagrantDestroy', function(req, res, next) {
   console.log('vagrantDestroy endpoint hit');
   
   const command = spawn('vagrant', ['destroy', '-f'], { cwd: vagrantPath });
-  io.emit('process-start', 'Destroying vagrant...');
 
   let output = '';
   let last_line = '';
-
-  command.on('spawn', (code) => {
-    console.log('Vagrant destroy process started');
-    io.emit('vagrant-output', 'VAGRANT DESTROY PROCESS STARTING...\n');
-  });
 
   command.stdout.on('data', (data) => {
     line = data.toString();
@@ -318,7 +305,7 @@ router.get('/vagrantDestroy', function(req, res, next) {
     const lines = output.trim().split('\n');
     //console.log('File list:', lines);
     console.log('Vagrant destroy process finished');
-    io.emit('vagrant-output', "\nVAGRANT DESTROY PROCESS ENDED\n");
+    //io.emit('vagrant-output', "\nVAGRANT DESTROY PROCESS ENDED\n");
     io.emit('process-complete', 'Vagrant destroy process finished');
     output = "VAGRANT DESTROY PROCESS:\n" + output + "\nVAGRANT DESTROY PROCESS ENDED\n";
     if (last_line.includes('stderr:')) {
@@ -336,16 +323,9 @@ router.get('/vagrantHalt', function(req, res, next) {
   console.log('vagrantHalt endpoint hit');
   
   const command = spawn('vagrant', ['halt'], { cwd: vagrantPath });
-  io.emit('process-start', 'Halting vagrant...');
 
   let output = '';
   let last_line = '';
-
-  command.on('spawn', (code) => {
-    console.log('Vagrant halt process started');
-    io.emit('vagrant-output', 'VAGRANT HALT PROCESS STARTING...\n');
-  }
-  );
 
   command.stdout.on('data', (data) => {
     line = data.toString();
@@ -366,7 +346,7 @@ router.get('/vagrantHalt', function(req, res, next) {
     const lines = output.trim().split('\n');
     //console.log('File list:', lines);
     console.log('Vagrant halt process finished');
-    io.emit('vagrant-output', "\nVAGRANT HALT PROCESS ENDED\n");
+    //io.emit('vagrant-output', "\nVAGRANT HALT PROCESS ENDED\n");
     io.emit('process-complete', 'Vagrant halt process finished');
     output = "VAGRANT HALT PROCESS:\n" + output + "\nVAGRANT HALT PROCESS ENDED\n";
     if (last_line.includes('stderr:')) {

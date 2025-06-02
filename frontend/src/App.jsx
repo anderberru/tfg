@@ -71,6 +71,7 @@ function App() {
             el.scrollTop = el.scrollHeight;
           }
         });
+        //setOutput(prev => prev + "\n--------------------------------------------------------------------------\n");
     }, [processComplete]);
     
 
@@ -167,6 +168,13 @@ function App() {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [app_state]);
+
+  /*
+  useEffect(() => {
+      
+      setLiveOutput(prev => prev + "\n--------------------------------------------------------------------------\n");
+    }, [processComplete]);
+    */
 
   function check_app_state(vmList) {
     console.log('LIST:', vmList)
@@ -995,6 +1003,8 @@ function App() {
     } else if (app_state === "stopped") {
       setApp_state("initializing")
     }
+    setLiveOutput(prev => prev + "VAGRANT UP PROCESS STARTED...\n");
+
     fetch('/vagrantUp', {
       method: 'POST',
       headers: {
@@ -1024,6 +1034,7 @@ function App() {
         set_vm_list_state('running')
         setProcessComplete(true);
         setOutput((prevOutput) => prevOutput + data.message)
+        setLiveOutput(prev => prev + "VAGRANT UP PROCESS ENDED\n");
       })
       .catch((error) => {
         console.error('Error:', error)
@@ -1047,6 +1058,7 @@ function App() {
   function vagrant_halt() {
     setApp_state("stopping")
     setProcessComplete(false);
+    setLiveOutput(prev => prev + "VAGRANT HALT PROCESS STARTED...\n");
     fetch('/vagrantHalt')
       .then((response) => response.json())
       .then((data) => {
@@ -1056,6 +1068,7 @@ function App() {
         setApp_state("stopped")
         setOutput((prevOutput) => prevOutput + data.message)
         setProcessComplete(true);
+        setLiveOutput(prev => prev + "VAGRANT HALT PROCESS ENDED\n");
       })
       .catch((error) => {
         console.error('Error:', error)
@@ -1068,6 +1081,7 @@ function App() {
     // Call the vagrant destroy command here
     setApp_state("destroying")
     setProcessComplete(false);
+    setLiveOutput(prev => prev + "VAGRANT DESTROY PROCESS STARTED...\n");
     fetch('/vagrantDestroy')
       .then((response) => response.json())
       .then((data) => {
@@ -1076,6 +1090,7 @@ function App() {
         set_vm_list_state('not created')
         setOutput((prevOutput) => prevOutput + data.message)
         setProcessComplete(true);
+        setLiveOutput(prev => prev + "VAGRANT DESTROY PROCESS ENDED\n");
       })
       .catch((error) => {
         console.error('Error:', error)
