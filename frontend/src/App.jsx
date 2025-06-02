@@ -35,11 +35,12 @@ function App() {
   const [isVagrantInstalled, setIsVagrantInstalled] = useState(false)
   const [isVirtualBoxInstalled, setIsVirtualBoxInstalled] = useState(false)
   const [isSaved, setIsSaved] = useState(true)
+  const [showLog, setShowLog] = useState(false);
+  const [liveOutput, setLiveOutput] = useState('');
 
   const socket = io(); // Connects to the same host
 
-  function OutputConsole({ output_full, processComplete }) {
-    const [output, setOutput] = useState('');
+  function OutputConsole({ output, setOutput, output_full, processComplete, visible }) {
     const consoleRef = useRef(null);
 
     useEffect(() => {
@@ -70,24 +71,18 @@ function App() {
             el.scrollTop = el.scrollHeight;
           }
         });
-      if (!processComplete) {
-        setOutput(output_full);
-      }
-    }, [processComplete, output_full]);
+    }, [processComplete]);
+    
 
-    if (processComplete) {
-      return (
-        <pre className='console' ref={consoleRef}>
-          {output_full}
-        </pre>
-      );
-    } else {
-      return (
-        <pre className='console' ref={consoleRef}>
-          {output}
-        </pre>
-      );
-    }
+    return (
+    <pre
+        className="console"
+        ref={consoleRef}
+        style={{ display: visible ? 'block' : 'none' }}
+      >
+        {output}
+      </pre>
+    );
   }
 
   useEffect(() => {
@@ -194,56 +189,57 @@ function App() {
     return (
       <>
       <div>
-        <h1>Cluster Manager</h1>
-        <p>Current state: {app_state}</p>
-        {render_vm_list()}
+      <h1>Cluster Manager</h1>
+      <p>Current state: {app_state}</p>
+      <label>
+      Cluster type:
+      <select
+        disabled={app_state != "not created"}
+        value={learning}
+        onChange={(e) => {
+        setLearning(e.target.value);
+        setIsSaved(false);
+        }}
+      >
+        <option value="0">DMZ</option>
+        <option value="1">Distributed Machine Learning</option>
+      </select>
+      </label>
+      {Number(learning) === 0 && (
+      <>
         <label>
-        Cluster type:
+        LAN Subnet:
+        <input
+        disabled={app_state != "not created"}
+        type="checkbox"
+        checked={lan_subnet === 1}
+        onChange={(e) => {
+        setLan_subnet(e.target.checked ? 1 : 0);
+        setIsSaved(false);
+        }}
+        />
+        </label>
+        <label>
+        DMZ Type:
         <select
-          disabled={app_state != "not created"}
-          value={learning}
-          onChange={(e) => {
-          setLearning(e.target.value);
-          setIsSaved(false);
-          }}
+        disabled={app_state != "not created"}
+        value={dmz_type}
+        onChange={(e) => {
+        setDmz_type(e.target.value);
+        setIsSaved(false);
+        }}
         >
-          <option value="0">DMZ</option>
-          <option value="1">Distributed Machine Learning</option>
+        <option value="0">Simple</option>
+        <option value="1">Dual firewall</option>
         </select>
         </label>
-        {Number(learning) === 0 && (
-        <>
-          <label>
-          LAN Subnet:
-          <input
-            disabled={app_state != "not created"}
-            type="checkbox"
-            checked={lan_subnet === 1}
-            onChange={(e) => {
-            setLan_subnet(e.target.checked ? 1 : 0);
-            setIsSaved(false);
-            }}
-          />
-          </label>
-          <label>
-          DMZ Type:
-          <select
-            disabled={app_state != "not created"}
-            value={dmz_type}
-            onChange={(e) => {
-            setDmz_type(e.target.value);
-            setIsSaved(false);
-            }}
-          >
-            <option value="0">Simple</option>
-            <option value="1">Dual firewall</option>
-          </select>
-          </label>
-        </>
-        )}
-        <br /><br />
-        {buttons()}
-        <OutputConsole output_full={output} processComplete={processComplete} />
+      </>
+      )}
+      <br /><br />
+      {buttons()}
+      
+      <OutputConsole output={liveOutput} setOutput={setLiveOutput} output_full={output} processComplete={processComplete} visible={showLog}/>
+      {render_vm_list()}
       </div>
       </>
     )
@@ -257,6 +253,7 @@ function App() {
           <button disabled={isSaved} onClick={save_parameters}>
             {isSaved ? "Config saved" : "Save config"}
           </button>
+          <button onClick={() => {setShowLog(!showLog);}}>{showLog ? "Hide log" : "Show log"}</button>
         </div>
       )
     } else if (app_state === "creating") {
@@ -264,6 +261,7 @@ function App() {
         <div id="buttons">
           <button disabled onClick={vagrant_up}>Creating...</button>
           <button onClick={cancel_vagrant_up}>Cancel</button>
+          <button onClick={() => {setShowLog(!showLog);}}>{showLog ? "Hide log" : "Show log"}</button>
         </div>
       )
     } else if (app_state === "created") {
@@ -272,6 +270,7 @@ function App() {
           <button disabled onClick={vagrant_up}>Running</button>
           <button onClick={vagrant_halt}>Stop All</button>
           <button onClick={vagrant_destroy}>Destroy All</button>
+          <button onClick={() => {setShowLog(!showLog);}}>{showLog ? "Hide log" : "Show log"}</button>
         </div>
       )
     } else if (app_state === "stopped") {
@@ -279,6 +278,7 @@ function App() {
         <div id="buttons">
           <button onClick={vagrant_up}>Initialize</button>
           <button onClick={vagrant_destroy}>Destroy All</button>
+          <button onClick={() => {setShowLog(!showLog);}}>{showLog ? "Hide log" : "Show log"}</button>
         </div>
       )
     } else if (app_state === "initializing") {
@@ -286,18 +286,21 @@ function App() {
         <div id="buttons">
           <button disabled onClick={vagrant_up}>Initializing...</button>
           <button onClick={cancel_vagrant_up}>Cancel</button>
+          <button onClick={() => {setShowLog(!showLog);}}>{showLog ? "Hide log" : "Show log"}</button>
         </div>
       )
     } else if (app_state === "stopping") {
       return (
         <div id="buttons">
           <button disabled onClick={vagrant_halt}>Stopping...</button>
+          <button onClick={() => {setShowLog(!showLog);}}>{showLog ? "Hide log" : "Show log"}</button>
         </div>
       )
     } else if (app_state === "destroying") {
       return (
         <div id="buttons">
           <button disabled onClick={vagrant_destroy}>Destroying...</button>
+          <button onClick={() => {setShowLog(!showLog);}}>{showLog ? "Hide log" : "Show log"}</button>
         </div>
       )
     }
@@ -524,31 +527,33 @@ function App() {
     const dmzNodes = vm_list.filter(vm => vm.name.includes('dmz'));
 
     return (
-      <div className="cluster-diagram">
-        <div className="lan-net">
-          <div className="group_title">
-            <h2>LAN Network</h2>
-          </div>
-          <div className="group lan-group">
+      <div className="cluster-diagram-wrapper">
+        <div className="cluster-diagram">
+          <div className="lan-net">
             <div className="group_title">
-                <button title='Add LAN node' disabled={app_state !== "not created"} onClick={() => add_vm("lan")}><Plus size={16} /></button>
+              <h2>LAN Network</h2>
             </div>
-            {lanNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu))}
+            <div className="group lan-group">
+              <div className="group_title">
+                  <button title='Add LAN node' disabled={app_state !== "not created"} onClick={() => add_vm("lan")}> <Plus size={16} /> </button>
+              </div>
+              {lanNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu))}
+            </div>
+            {render_vm_list_lanB(lanBNodes)}
           </div>
-          {render_vm_list_lanB(lanBNodes)}
-        </div>
 
-        <div className="group firewall-group">
-          <div className="group_title">
-            <h2>Firewalls</h2>
+          <div className="group firewall-group">
+            <div className="group_title">
+              <h2>Firewalls</h2>
+            </div>
+            {firewalls.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu))}
           </div>
-          {firewalls.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu))}
-        </div>
 
-        <div className="group dmz-group">
-          <h2>DMZ Network</h2>
-          <button title='Add DMZ node' disabled={app_state !== "not created"} onClick={() => add_vm("dmz")}><Plus size={16} /></button>
-          {dmzNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu))}
+          <div className="group dmz-group">
+            <h2>DMZ Network</h2>
+            <button title='Add DMZ node' disabled={app_state !== "not created"} onClick={() => add_vm("dmz")}> <Plus size={16} /> </button>
+            {dmzNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu))}
+          </div>
         </div>
       </div>
     );
@@ -557,18 +562,20 @@ function App() {
     const clientNodes = vm_list.filter(vm => vm.name.includes('client'));
 
     return (
-      <div className="cluster-diagram">
-        <div className="group server-group">
-          <div className="group_title">
-            <h2>Server</h2>
+      <div className="cluster-diagram-wrapper">
+        <div className="cluster-diagram">
+          <div className="group server-group">
+            <div className="group_title">
+              <h2>Server</h2>
+            </div>
+            {servers.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu))}
           </div>
-          {servers.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu))}
-        </div>
 
-        <div className="group client-group">
-          <h2>Client Nodes</h2>
-          <button title='Add Client node' disabled={app_state !== "not created"} onClick={() => add_vm("client")}><Plus size={16} /></button>
-          {clientNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu))}
+          <div className="group client-group">
+            <h2>Client Nodes</h2>
+            <button title='Add Client node' disabled={app_state !== "not created"} onClick={() => add_vm("client")}> <Plus size={16} /> </button>
+            {clientNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu))}
+          </div>
         </div>
       </div>
     );

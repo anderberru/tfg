@@ -40,7 +40,6 @@ end
       end
       fw1.vm.network "private_network", type: "static", ip: "10.10.20.5" # DMZ network
       
-      
 
       # Use the detected interface in public_network
       fw1.vm.network "public_network", bridge: $default_iface
