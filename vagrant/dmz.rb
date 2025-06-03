@@ -238,7 +238,7 @@ end
         config.vm.define "lanB#{i}" do |lanB|
           lanB.vm.box = $BOX_IMAGE
           lanB.vm.hostname = "lanB#{i}"
-          lanB.vm.network "private_network", type: "static", ip: "10.10.10.#{130 + 1}" # LAN B
+          lanB.vm.network "private_network", type: "static", ip: "10.10.10.#{130 + i}" # LAN B
 
             if !$SCRIPT_LIST_LANB[i].to_s.strip.empty?
               lanB.vm.provision "shell", path: $CUSTOM_SCRIPT_DIR+$SCRIPT_LIST_LANB[i], privileged: false

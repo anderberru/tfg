@@ -358,7 +358,7 @@ function App() {
 }
 
 
-  function v_box(name, state, isFirewall, script, isBad, show) {
+  function v_box(name, state, isFirewall, script, isBad, show, ip) {
     return (
       <div className="v-box">
       <h2>
@@ -366,6 +366,8 @@ function App() {
         {" " + name + " "}
         {delete_vm_button(name)}
       </h2>
+      <p>{name == "firewall1" ? "Internet access" : ip}</p>
+      {name == "firewall2" && (<p>Firewall 2</p>)}
       <p>
         {isFirewall ? (
         <img className='vm_image' src={firewallImg} alt="Firewall" />
@@ -537,6 +539,7 @@ function App() {
     return (
       <div className="cluster-diagram-wrapper">
         <div className="cluster-diagram">
+          {render_lines()}
           <div className="lan-net">
             <div className="group_title">
               <h2>LAN Network</h2>
@@ -545,7 +548,7 @@ function App() {
               <div className="group_title">
                   <button title='Add LAN node' disabled={app_state !== "not created"} onClick={() => add_vm("lan")}> <Plus size={16} /> </button>
               </div>
-              {lanNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu))}
+              {lanNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu, vm.ip))}
             </div>
             {render_vm_list_lanB(lanBNodes)}
           </div>
@@ -554,13 +557,13 @@ function App() {
             <div className="group_title">
               <h2>Firewalls</h2>
             </div>
-            {firewalls.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu))}
+            {firewalls.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu, vm.ip))}
           </div>
 
           <div className="group dmz-group">
             <h2>DMZ Network</h2>
             <button title='Add DMZ node' disabled={app_state !== "not created"} onClick={() => add_vm("dmz")}> <Plus size={16} /> </button>
-            {dmzNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu))}
+            {dmzNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu, vm.ip))}
           </div>
         </div>
       </div>
@@ -576,19 +579,43 @@ function App() {
             <div className="group_title">
               <h2>Server</h2>
             </div>
-            {servers.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu))}
+            {servers.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu, vm.ip))}
           </div>
 
           <div className="group client-group">
             <h2>Client Nodes</h2>
             <button title='Add Client node' disabled={app_state !== "not created"} onClick={() => add_vm("client")}> <Plus size={16} /> </button>
-            {clientNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu))}
+            {clientNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu, vm.ip))}
           </div>
         </div>
       </div>
     );
   }
 }
+
+  function render_lines() {
+    if (learning != 0) {
+      return;
+    }
+    return (
+      <>
+        {/* lanA-LanB */}
+        {lan_subnet != 0 && draw_line(50, 50, 150, 50)}
+        {/* lanA-firewall1 */}
+        {dmz_type==0 && draw_line(50, 50, 50, 150)}
+        {/* lanB-firewall1 */}
+        {dmz_type==1 && draw_line(150, 50, 150, 150)}
+        {/* lanB-firewall2 */}
+        {dmz_type==1 && draw_line(150, 50, 150, 150)}
+        {/* firewall1-dmz */}
+        {dmz_type==0 && draw_line(50, 150, 150, 150)}
+        {/* firewall2-dmz */}
+        {dmz_type==1 && draw_line(150, 150, 250, 150)}
+        {/* firewall1-firewall2 */}
+        {dmz_type==1 && draw_line(150, 150, 250, 150)}
+      </>
+    );
+  }
 
 
   function render_vm_list_lanB(list) {
@@ -599,7 +626,7 @@ function App() {
           <button title='Add LanB node' disabled={app_state != "not created"} onClick={() => add_vm("lanB")}><Plus size={16} /></button>
           {list.map((vm) => (
             <div key={vm.name}>
-              {v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu)}
+              {v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu, vm.ip)}
             </div>
           ))}
         </div>
@@ -804,10 +831,9 @@ function App() {
         const vmNumber = parseInt(vm.name.replace(name.slice(0, -1), ""));
         const deletedVmNumber = parseInt(name.replace(name.slice(0, -1), ""));
         if (vmNumber > deletedVmNumber) {
-          return {
-          ...vm,
-          name: name.slice(0, -1) + (vmNumber - 1),
-          };
+          vm.name = vm.name.slice(0, -1) + (vmNumber - 1)
+          vm.updateIp(vm.name);
+          return vm;
         }
         }
         return vm;
