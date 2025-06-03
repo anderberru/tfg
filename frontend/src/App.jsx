@@ -539,7 +539,7 @@ function App() {
     return (
       <div className="cluster-diagram-wrapper">
         <div className="cluster-diagram">
-          {render_lines()}
+          {/*render_lines()*/}
           <div className="lan-net">
             <div className="group_title">
               <h2>LAN Network</h2>
@@ -592,31 +592,6 @@ function App() {
     );
   }
 }
-
-  function render_lines() {
-    if (learning != 0) {
-      return;
-    }
-    return (
-      <>
-        {/* lanA-LanB */}
-        {lan_subnet != 0 && draw_line(50, 50, 150, 50)}
-        {/* lanA-firewall1 */}
-        {dmz_type==0 && draw_line(50, 50, 50, 150)}
-        {/* lanB-firewall1 */}
-        {dmz_type==1 && draw_line(150, 50, 150, 150)}
-        {/* lanB-firewall2 */}
-        {dmz_type==1 && draw_line(150, 50, 150, 150)}
-        {/* firewall1-dmz */}
-        {dmz_type==0 && draw_line(50, 150, 150, 150)}
-        {/* firewall2-dmz */}
-        {dmz_type==1 && draw_line(150, 150, 250, 150)}
-        {/* firewall1-firewall2 */}
-        {dmz_type==1 && draw_line(150, 150, 250, 150)}
-      </>
-    );
-  }
-
 
   function render_vm_list_lanB(list) {
     if (lan_subnet != 0) {
@@ -1157,6 +1132,30 @@ function App() {
           <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="black" strokeWidth="2" />
       </svg>
     )
+  }
+
+  function render_lines() {
+    if (learning != 0) {
+      return;
+    }
+    return (
+      <>
+        {/* lanA-LanB */}
+        {lan_subnet != 0 && draw_line(1, 60, 0, 60)}
+        {/* lanA-firewall1 */}
+        {dmz_type==0 && draw_line(50, 50, 50, 150)}
+        {/* lanB-firewall1 */}
+        {dmz_type==1 && draw_line(150, 50, 150, 150)}
+        {/* lanB-firewall2 */}
+        {dmz_type==1 && draw_line(150, 50, 150, 150)}
+        {/* firewall1-dmz */}
+        {dmz_type==0 && draw_line(50, 150, 150, 150)}
+        {/* firewall2-dmz */}
+        {dmz_type==1 && draw_line(150, 150, 250, 150)}
+        {/* firewall1-firewall2 */}
+        {dmz_type==1 && draw_line(150, 150, 250, 150)}
+      </>
+    );
   }
 
   function display_vagrant_vbox_version() {
