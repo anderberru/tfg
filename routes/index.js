@@ -185,9 +185,6 @@ router.post('/vagrantUp', function (req, res, next) {
     vagrantUp.on('close', (code) => {
       const lines = output.trim().split('\n');
       console.log('Vagrant up process finished');
-      //io.emit('vagrant-output', "\nVAGRANT UP PROCESS ENDED\n");
-      io.emit('process-complete', 'Vagrant up process finished');
-
       output = "VAGRANT UP PROCESS:\n" + output + "\nVAGRANT UP PROCESS ENDED\n";
       try {
         if (last_line.includes('stderr:')) {

@@ -71,7 +71,6 @@ function App() {
             el.scrollTop = el.scrollHeight;
           }
         });
-        //setOutput(prev => prev + "\n--------------------------------------------------------------------------\n");
     }, [processComplete]);
     
 
@@ -169,13 +168,8 @@ function App() {
     };
   }, [app_state]);
 
-  /*
-  useEffect(() => {
-      
-      setLiveOutput(prev => prev + "\n--------------------------------------------------------------------------\n");
-    }, [processComplete]);
-    */
 
+  // sends request to the backend to start vagrant status
   function check_app_state(vmList) {
     console.log('LIST:', vmList)
     const hasRunning = vmList.some(vm => vm.state === 'running');
@@ -193,6 +187,7 @@ function App() {
     }
   }
 
+  // renders the main component
   function cluster_selection() {
     return (
       <>
@@ -253,6 +248,7 @@ function App() {
     )
   }
 
+  // renders the buttons based on the app state
   function buttons() {
     if (app_state === "not created") {
       return (
@@ -314,6 +310,7 @@ function App() {
     }
   }
 
+  // renders the buttons for uploading files
   function UploadFileButton({ name, script, app_state, upload_file, remove_script }) {
   const fileInputRef = useRef();
 
@@ -357,7 +354,7 @@ function App() {
   );
 }
 
-
+  // renders the VM box with all the information
   function v_box(name, state, isFirewall, script, isBad, show, ip) {
     return (
       <div className="v-box">
@@ -387,6 +384,7 @@ function App() {
     )
   }
 
+  // renders options submenu for the VM
   function vm_more_options(name, isBad, state, script, show) {
     if (show) {
       return (
@@ -406,6 +404,7 @@ function App() {
     }
   }
 
+  // enables the VM menu for more options
   function enable_vm_menu(name) {
     setVm_list((prevList) => {
       const updatedList = prevList.map((vm) => {
@@ -418,6 +417,7 @@ function App() {
     });
   }
 
+  // renders the button for deleting the VM
   function delete_vm_button(name) {
     if (name === "firewall1" || name === "firewall2" || name === "lan" || name === "dmz" || name === "lanB" || name === "server" || name === "client1" || name === "client2") {
       return;
@@ -427,6 +427,7 @@ function App() {
     )
   }
 
+  // changes isBad state for the VM
   function set_isBad(name, isBad) {
     setBad_client((prevList) => {
       const updatedList = [...prevList];
@@ -448,6 +449,7 @@ function App() {
     setIsSaved(false);
   }
 
+  // renders the button to set isBad state for the VM
   function bad_client_button(name, isBad) {
     if (name.includes("client")) {
       return (
@@ -467,6 +469,7 @@ function App() {
 
   }
 
+  // removes the script from the VM
   function remove_script(name) {
     set_VMachine_script(name, "")
     if (name === "firewall1") {
@@ -529,70 +532,71 @@ function App() {
     setIsSaved(false);
   }
 
+  // renders the cluster diagram with all the VMs
   function render_vm_list() {
-  if (learning != 1) {
-    const firewalls = vm_list.filter(vm => vm.name.includes('firewall'));
-    const lanNodes = vm_list.filter(vm => vm.name.includes('lan') && !vm.name.includes('lanB'));
-    const lanBNodes = vm_list.filter(vm => vm.name.includes('lanB'));
-    const dmzNodes = vm_list.filter(vm => vm.name.includes('dmz'));
+    if (learning != 1) {
+      const firewalls = vm_list.filter(vm => vm.name.includes('firewall'));
+      const lanNodes = vm_list.filter(vm => vm.name.includes('lan') && !vm.name.includes('lanB'));
+      const lanBNodes = vm_list.filter(vm => vm.name.includes('lanB'));
+      const dmzNodes = vm_list.filter(vm => vm.name.includes('dmz'));
 
-    return (
-      <div className="cluster-diagram-wrapper">
-        <div className="cluster-diagram">
-          {/*render_lines()*/}
-          <div className="lan-net">
-            <div className="group_title">
-              <h2>LAN Network</h2>
-            </div>
-            <div className="group lan-group">
+      return (
+        <div className="cluster-diagram-wrapper">
+          <div className="cluster-diagram">
+            <div className="lan-net">
               <div className="group_title">
-                  <button title='Add LAN node' disabled={app_state !== "not created"} onClick={() => add_vm("lan")}> <Plus size={16} /> </button>
+                <h2>LAN Network</h2>
               </div>
-              {lanNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu, vm.ip))}
+              <div className="group lan-group">
+                <div className="group_title">
+                    <button title='Add LAN node' disabled={app_state !== "not created"} onClick={() => add_vm("lan")}> <Plus size={16} /> </button>
+                </div>
+                {lanNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu, vm.ip))}
+              </div>
+              {render_vm_list_lanB(lanBNodes)}
             </div>
-            {render_vm_list_lanB(lanBNodes)}
-          </div>
 
-          <div className="group firewall-group">
-            <div className="group_title">
-              <h2>Firewalls</h2>
+            <div className="group firewall-group">
+              <div className="group_title">
+                <h2>Firewalls</h2>
+              </div>
+              {firewalls.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu, vm.ip))}
             </div>
-            {firewalls.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu, vm.ip))}
-          </div>
 
-          <div className="group dmz-group">
-            <h2>DMZ Network</h2>
-            <button title='Add DMZ node' disabled={app_state !== "not created"} onClick={() => add_vm("dmz")}> <Plus size={16} /> </button>
-            {dmzNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu, vm.ip))}
+            <div className="group dmz-group">
+              <h2>DMZ Network</h2>
+              <button title='Add DMZ node' disabled={app_state !== "not created"} onClick={() => add_vm("dmz")}> <Plus size={16} /> </button>
+              {dmzNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu, vm.ip))}
+            </div>
           </div>
         </div>
-      </div>
-    );
-  } else {
-    const servers = vm_list.filter(vm => vm.name.includes('server'));
-    const clientNodes = vm_list.filter(vm => vm.name.includes('client'));
+      );
+    } else {
+      const servers = vm_list.filter(vm => vm.name.includes('server'));
+      const clientNodes = vm_list.filter(vm => vm.name.includes('client'));
 
-    return (
-      <div className="cluster-diagram-wrapper">
-        <div className="cluster-diagram">
-          <div className="group server-group">
-            <div className="group_title">
-              <h2>Server</h2>
+      return (
+        <div className="cluster-diagram-wrapper">
+          <div className="cluster-diagram">
+            <div className="group server-group">
+              <div className="group_title">
+                <h2>Server</h2>
+              </div>
+              {servers.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu, vm.ip))}
             </div>
-            {servers.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu, vm.ip))}
-          </div>
 
-          <div className="group client-group">
-            <h2>Client Nodes</h2>
-            <button title='Add Client node' disabled={app_state !== "not created"} onClick={() => add_vm("client")}> <Plus size={16} /> </button>
-            {clientNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu, vm.ip))}
+            <div className="group client-group">
+              <h2>Client Nodes</h2>
+              <button title='Add Client node' disabled={app_state !== "not created"} onClick={() => add_vm("client")}> <Plus size={16} /> </button>
+              {clientNodes.map(vm => v_box(vm.name, vm.state, vm.isFirewall, vm.script, vm.isBad, vm.showMenu, vm.ip))}
+            </div>
           </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 }
 
+  // renders the LANB network list
   function render_vm_list_lanB(list) {
     if (lan_subnet != 0) {
       return (
@@ -611,7 +615,7 @@ function App() {
     }
   }
 
-
+  // sets the state of the VM list
   function set_vm_list_state(state) {
     const vmList = vm_list.map((vm) => {
           const vmName = vm.name
@@ -624,9 +628,9 @@ function App() {
     setVm_list(vmList)
   }
 
+  // sends request to the backend to start vagrant status
   function vm_status() {
 
-    console.log('FIREWALLALA  ', script_firewall1)
     fetch('/vmList')
       .then((response) => response.json())
       .then((data) => {
@@ -764,7 +768,7 @@ function App() {
       })
   }
 
-
+  // adds a new VM to the list
   function add_vm(name) {
     let count = 0
     if (name === "lan") {
@@ -785,6 +789,7 @@ function App() {
     setIsSaved(false);
   }
 
+  // removes a VM from the list
   function remove_vm(name) {
     if (name.includes("lanB")) {
       setNode_count_lanB(node_count_lanB - 1)
@@ -818,6 +823,7 @@ function App() {
     setIsSaved(false);
   }
 
+  // sends request to the backend to start vagrant ssh <m_name>
   function open_vm_console(m_name) {
     // Call the vagrant ssh command here
     fetch('/vagrantSsh', {
@@ -837,6 +843,7 @@ function App() {
       })
   }
 
+  // sends JSON data to be saved to the backend
   async function save_parameters() {
     try {
       const response = await fetch('/saveParameters', {
@@ -874,6 +881,7 @@ function App() {
     }
   }
 
+  // fetches the parameters from the backend
   async function read_parameters() {
     try {
       const response = await fetch('/readParameters', {
@@ -893,6 +901,7 @@ function App() {
     }
   }
 
+  // sets the script for the VM
   function set_VMachine_script(name, script) {
     setVm_list((prevList) => {
       const updatedList = prevList.map((vm) => {
@@ -904,8 +913,8 @@ function App() {
       return updatedList;
     });
   }
-  
 
+  // uploads the file to the server and updates the VM script
   function upload_file(event, vm_name) {
     
     const file = event.target.files[0];
@@ -995,7 +1004,7 @@ function App() {
       });
   }
 
-
+  // sends the request to the backend start the vagrant up process
   function vagrant_up() {
     // Call the vagrant up command here
     setProcessComplete(false);
@@ -1043,6 +1052,7 @@ function App() {
       })
   }
 
+  // sends the request to the backend to cancel the vagrant up process
   function cancel_vagrant_up() {
     
     fetch('/cancelVagrantUp')
@@ -1056,6 +1066,7 @@ function App() {
 
   }
 
+  // sends the request to the backend to start the vagrant halt process
   function vagrant_halt() {
     setApp_state("stopping")
     setProcessComplete(false);
@@ -1078,6 +1089,7 @@ function App() {
 
   }
 
+  // sends the request to the backend to start the vagrant destroy process
   function vagrant_destroy() {
     // Call the vagrant destroy command here
     setApp_state("destroying")
@@ -1099,65 +1111,7 @@ function App() {
       })
   }
 
-  function example() {
-    return (
-      <>
-        <div>
-          <a href="https://vite.dev" target="_blank">
-            <img src={viteLogo} className="logo" alt="Vite logo" />
-          </a>
-          <a href="https://react.dev" target="_blank">
-            <img src={reactLogo} className="logo react" alt="React logo" />
-          </a>
-        </div>
-        <h1>Vite + React</h1>
-        <div className="card">
-          <button onClick={() => setCount((count) => count + 1)}>
-            count is {count}
-          </button>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test HMR
-          </p>
-        </div>
-        <p className="read-the-docs">
-          Click on the Vite and React logos to learn more
-        </p>
-      </>
-    )
-  }
-
-  function draw_line(x1, y1, x2, y2) {
-    return (
-      <svg className="diagram-lines">
-          <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="black" strokeWidth="2" />
-      </svg>
-    )
-  }
-
-  function render_lines() {
-    if (learning != 0) {
-      return;
-    }
-    return (
-      <>
-        {/* lanA-LanB */}
-        {lan_subnet != 0 && draw_line(1, 60, 0, 60)}
-        {/* lanA-firewall1 */}
-        {dmz_type==0 && draw_line(50, 50, 50, 150)}
-        {/* lanB-firewall1 */}
-        {dmz_type==1 && draw_line(150, 50, 150, 150)}
-        {/* lanB-firewall2 */}
-        {dmz_type==1 && draw_line(150, 50, 150, 150)}
-        {/* firewall1-dmz */}
-        {dmz_type==0 && draw_line(50, 150, 150, 150)}
-        {/* firewall2-dmz */}
-        {dmz_type==1 && draw_line(150, 150, 250, 150)}
-        {/* firewall1-firewall2 */}
-        {dmz_type==1 && draw_line(150, 150, 250, 150)}
-      </>
-    );
-  }
-
+  // renders the Vagrant and VirtualBox version information
   function display_vagrant_vbox_version() {
     return (
       <div className="version-info">

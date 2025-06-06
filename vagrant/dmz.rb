@@ -20,7 +20,7 @@ elsif RUBY_PLATFORM =~ /mswin|mingw|cygwin/
 
   if $default_iface.nil?
     puts "Could not automatically detect the interface. Vagrant will ask for it."
-  else
+  #else
     #puts "Detected interface: #{$default_iface}"
   end
 
@@ -78,6 +78,7 @@ end
       dmz.vm.hostname = "dmz"
       dmz.vm.network "private_network", type: "static", ip: "10.10.20.10" # DMZ network
       
+      # Provisioning for the DMZ node
       dmz.vm.provision "shell", inline: <<-SHELL
         apt-get update
         apt-get install -y avahi-daemon libnss-mdns
@@ -94,14 +95,17 @@ end
         done
       SHELL
 
+      # Provisioning scripts for the DMZ node
       dmz.vm.provision "shell", path: "scripts/lucid_install.sh", privileged: false
       dmz.vm.provision "shell", path: "scripts/mysql_config.sh"
       dmz.vm.provision "shell", path: "scripts/tomcat.sh", privileged: false
 
+      # Custom script for the DMZ node
       if !$SCRIPT_LIST_DMZ[0].to_s.strip.empty?
         dmz.vm.provision "shell", path: $CUSTOM_SCRIPT_DIR+$SCRIPT_LIST_DMZ[0], privileged: false
       end
 
+      # Provisioning for the firewall
       if $DUAL_FIREWALL == 1
         dmz.vm.provision "shell", path: "scripts/dmz.sh"
       else
