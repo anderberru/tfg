@@ -11,3 +11,8 @@ To run this application, you need to install [Vagrant](https://developer.hashico
    npm start
    ```
 4. Visit http://localhost:3000/ on your browser
+
+To run unit tests:
+```
+npm test
+```
