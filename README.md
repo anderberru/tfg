@@ -1,0 +1,13 @@
+To run this application, you need to install [Vagrant](https://developer.hashicorp.com/vagrant/install), [VirtualBox](https://www.virtualbox.org/wiki/Downloads) and [NodeJS](https://nodejs.org/en/download).
+
+## Instalation
+1. Clone the repository
+2. Run the following command to install all dependencies and to compile the React interface:
+   ```
+   npm run setup
+   ```
+3. To run the app:
+   ```
+   npm start
+   ```
+4. Visit http://localhost:3000/ on your browser
