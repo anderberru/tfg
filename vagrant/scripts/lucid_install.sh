@@ -26,4 +26,5 @@ else
     echo "No programs found in /vagrant/programs"
 fi
 
-#conda deactivate
+echo "Activating conda environment python39 on login..."
+echo ". ~/miniconda3/etc/profile.d/conda.sh && conda activate python39" >> ~/.bashrc
