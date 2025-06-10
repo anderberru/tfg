@@ -836,10 +836,12 @@ function App() {
       }),
     }).then((response) => response.json())
       .then((data) => {
-        console.log('Open VM Console response:', data)
+        console.log('Open VM Console response:', data);
+        setLiveOutput(prev => prev + (data.error ? data.error : data.message) + "\n");
       })
       .catch((error) => {
-        console.error('Error:', error)
+        console.error('Error:', error);
+        setLiveOutput(prev => prev + data.error+"\n");
       })
   }
 
