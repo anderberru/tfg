@@ -3,7 +3,7 @@ var router = express.Router();
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
-const { exec, spawn } = require('child_process');
+const { exec, spawn, execSync } = require('child_process');
 const kill = require('tree-kill');
 //const { io } = require('../app');
 
@@ -51,11 +51,13 @@ function writeJsonFile(filePath, data) {
 
 // Function to detect available terminal on Linux
 function getLinuxTerminal() {
-  const terminals = ['x-terminal-emulator', 'gnome-terminal', 'terminator', 'konsole', 'xfce4-terminal', 'xterm', 'lxterminal', 'tilix', 'mate-terminal', 'alacritty'];
+  const terminals = ['Terminal', 'terminal', 'gnome-terminal', 'terminator', 'konsole', 'xfce4-terminal', 'xterm', 'lxterminal', 'tilix', 'mate-terminal', 'alacritty'];
 
   for (const term of terminals) {
+    //console.log(term)
     try {
       execSync(`which ${term}`, { stdio: 'ignore' });
+      console.log(`Found terminal: ${term}`);
       return term;
     } catch (_) {
       // Not found, try next
@@ -86,7 +88,7 @@ async function checkDependencies() {
 }
 
 /* GET home page. */
-router.get('/', function(req, res, next) {
+router.get('/', function (req, res, next) {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'dist', 'index.html'));
 });
 
@@ -95,7 +97,7 @@ router.get('/checkTools', async (req, res) => {
   res.json(status);
 });
 
-router.post('/vagrantSsh', function(req, res, next) {
+router.post('/vagrantSsh', function (req, res, next) {
   const vmName = req.body.vm_name;
   let command = '';
 
@@ -103,14 +105,23 @@ router.post('/vagrantSsh', function(req, res, next) {
     // Windows
     command = `start cmd /k "cd /d ${vagrantPath} && vagrant ssh ${vmName}"`;
   } else if (process.platform === 'linux') {
-      // Linux
-      const terminal = getLinuxTerminal();
+    // Linux
+    const terminal = getLinuxTerminal();
 
-      if (!terminal) {
-        return res.status(500).json({ error: 'No supported terminal found on Linux.' });
-      }
+    if (!terminal) {
+      return res.status(500).json({ error: 'No supported terminal found on Linux.' });
+    }
 
+     if (terminal === 'gnome-terminal' || terminal === 'mate-terminal') {
       command = `${terminal} -- bash -c "cd '${vagrantPath}' && vagrant ssh ${vmName}; bash"`;
+    } else if (terminal === 'terminator') {
+      command = `${terminal} -x bash -c "cd '${vagrantPath}' && vagrant ssh ${vmName}; bash"`;
+    } else if (terminal === 'xfce4-terminal') {
+      command = `${terminal} --command="bash -c 'cd ${vagrantPath} && vagrant ssh ${vmName}; bash'"`;
+    } else {
+      command = `${terminal} -e bash -c "cd '${vagrantPath}' && vagrant ssh ${vmName}; bash"`;
+    }
+    
   } else if (process.platform === 'darwin') {
     // macOS
     command = `osascript -e 'tell app "Terminal" to do script "cd ${vagrantPath} && vagrant ssh ${vmName}"'`;
@@ -131,14 +142,14 @@ router.post('/vagrantSsh', function(req, res, next) {
 
 });
 
-router.post('/saveParameters', function(req, res, next) {
+router.post('/saveParameters', function (req, res, next) {
   console.log('saveParameters endpoint hit');
   writeJsonFile(path.join(vagrantPath, 'parameters.json'), req.body);
   res.json({ message: 'Parameters saved' });
 }
 );
 
-router.get('/readParameters', function(req, res, next) {
+router.get('/readParameters', function (req, res, next) {
   console.log('getParameters endpoint hit');
   const filePath = path.join(vagrantPath, 'parameters.json');
   fs.readFile(filePath, 'utf8', (err, data) => {
@@ -209,7 +220,7 @@ router.post('/vagrantUp', function (req, res, next) {
 });
 
 
-router.get('/vmList', function(req, res, next) {
+router.get('/vmList', function (req, res, next) {
 
   console.log('vmList endpoint hit');
   const command = spawn('vagrant', ['status'], { cwd: vagrantPath });
@@ -236,7 +247,7 @@ router.get('/vmList', function(req, res, next) {
     //console.log('File list:', lines);
     console.log('Vagrant status process finished');
     const vmjson = vmList_to_json(lines);
-    
+
     res.json({ list: vmjson });
   });
 });
@@ -276,9 +287,9 @@ router.get('/cancelVagrantUp', (req, res) => {
   }
 });
 
-router.get('/vagrantDestroy', function(req, res, next) {
+router.get('/vagrantDestroy', function (req, res, next) {
   console.log('vagrantDestroy endpoint hit');
-  
+
   const command = spawn('vagrant', ['destroy', '-f'], { cwd: vagrantPath });
 
   let output = '';
@@ -317,9 +328,9 @@ router.get('/vagrantDestroy', function(req, res, next) {
 
 });
 
-router.get('/vagrantHalt', function(req, res, next) {
+router.get('/vagrantHalt', function (req, res, next) {
   console.log('vagrantHalt endpoint hit');
-  
+
   const command = spawn('vagrant', ['halt'], { cwd: vagrantPath });
 
   let output = '';
