@@ -838,10 +838,14 @@ function App() {
       .then((data) => {
         console.log('Open VM Console response:', data);
         setLiveOutput(prev => prev + (data.error ? data.error : data.message) + "\n");
+        if (data.error) {
+          alert("Error opening VM console, you can try to open it manually with 'vagrant ssh " + m_name + "'" + "in /vagrant directory");
+        }
       })
       .catch((error) => {
         console.error('Error:', error);
         setLiveOutput(prev => prev + data.error+"\n");
+        alert("Error opening VM console, you can try to open it manually with 'vagrant ssh " + m_name + "'" + "in /vagrant directory");
       })
   }
 

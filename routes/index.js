@@ -112,7 +112,7 @@ router.post('/vagrantSsh', function (req, res, next) {
       return res.status(500).json({ error: 'No supported terminal found on Linux.' });
     }
 
-     if (terminal === 'gnome-terminal' || terminal === 'mate-terminal') {
+    if (terminal === 'gnome-terminal' || terminal === 'mate-terminal') {
       command = `${terminal} -- bash -c "cd '${vagrantPath}' && vagrant ssh ${vmName}; bash"`;
     } else if (terminal === 'terminator') {
       command = `${terminal} -x bash -c "cd '${vagrantPath}' && vagrant ssh ${vmName}; bash"`;
