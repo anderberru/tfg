@@ -51,7 +51,8 @@ function writeJsonFile(filePath, data) {
 
 // Function to detect available terminal on Linux
 function getLinuxTerminal() {
-  const terminals = ['gnome-terminal', 'konsole', 'xfce4-terminal', 'xterm'];
+  const terminals = ['x-terminal-emulator', 'gnome-terminal', 'terminator', 'konsole', 'xfce4-terminal', 'xterm', 'lxterminal', 'tilix', 'mate-terminal', 'alacritty'];
+
   for (const term of terminals) {
     try {
       execSync(`which ${term}`, { stdio: 'ignore' });
