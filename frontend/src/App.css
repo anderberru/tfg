@@ -292,9 +292,37 @@ label {
 }
 
 input[type="checkbox"] {
-  accent-color: #667eea;
-  margin-left: 0.5em;
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: white;
+  border: 1px solid black;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  position: relative;
+  vertical-align: middle;
+  margin-right: 5px;
 }
+
+input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  width: 3px;
+  height: 6px;
+  border: solid black;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+input[type="checkbox"]:disabled {
+  background-color: #eee;
+  border-color: #aaa;
+  cursor: not-allowed;
+}
+
 
 select {
   border-radius: 8px;
@@ -304,7 +332,9 @@ select {
   margin-left: 0.5em;
   background: #f5f7fa;
   transition: border 0.2s;
+  color: #000;
 }
+
 
 select:focus {
   border: 1.5px solid #667eea;

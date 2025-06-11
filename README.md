@@ -12,7 +12,21 @@ To run this application, you need to install [Vagrant](https://developer.hashico
    ```
 4. Visit http://localhost:3000/ on your browser
 
+
 To run unit tests:
 ```
 npm test
+```
+
+To compile the frontend:
+```
+npm run build
+```
+
+If the application gives this error when creating a virtual machine:
+**The IP address configured for the host-only network is not within the allowed ranges.**
+
+Write this line in **/etc/vbox/networks.conf** (create the file if it doesn't exist):
+```
+* 0.0.0.0/0
 ```
