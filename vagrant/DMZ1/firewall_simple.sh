@@ -43,6 +43,8 @@ iptables -A INPUT -p tcp --dport 3306 -s 10.10.10.10 -j ACCEPT
 
 # Allow ICMP (ping) on the firewall
 iptables -A INPUT -p icmp -j ACCEPT
+# Block ICMP (ping) from DMZ (10.10.20.0/24) to LAN (10.10.10.0/24)
+iptables -A FORWARD -s 10.10.20.0/24 -d 10.10.10.0/24 -p icmp -j DROP
 iptables -A FORWARD -p icmp -j ACCEPT
 
 # Allow SSH access from the Internet to the firewall (Optional and dangerous, restrict if possible)

@@ -75,7 +75,7 @@ end
     # Node in the DMZ network (accessible from outside and the LAN)
     config.vm.define "dmz" do |dmz|
       dmz.vm.box = $BOX_IMAGE
-      dmz.vm.hostname = "dmz"
+      dmz.vm.hostname = "dmz-node0"
       dmz.vm.network "private_network", type: "static", ip: "10.10.20.10" # private IP in DMZ network
       
       # Provisioning for the DMZ node
@@ -117,7 +117,7 @@ end
     (1..$NODE_COUNT_DMZ).each do |i|
         config.vm.define "dmz#{i}" do |dmz|
         dmz.vm.box = $BOX_IMAGE
-        dmz.vm.hostname = "dmz#{i}"
+        dmz.vm.hostname = "dmz-node#{i}"
         dmz.vm.network "private_network", type: "static", ip: "10.10.20.#{10 + i}" # DMZ network
         
         dmz.vm.provision "shell", inline: <<-SHELL
@@ -156,7 +156,7 @@ end
     # Server in the LAN (internal access only)
     config.vm.define "lan" do |lan|
       lan.vm.box = $BOX_IMAGE
-      lan.vm.hostname = "lan"
+      lan.vm.hostname = "lan-node0"
       lan.vm.network "private_network", type: "static", ip: "10.10.10.10" # Internal network (LAN)
       
       lan.vm.provision "shell", inline: <<-SHELL
@@ -188,7 +188,7 @@ end
 
     (1..$NODE_COUNT_LAN).each do |i|
       # Server in the LAN (internal access only)
-      config.vm.define "lan#{i}" do |lan|
+      config.vm.define "lan-node#{i}" do |lan|
         lan.vm.box = $BOX_IMAGE
         lan.vm.hostname = "lan#{i}"
         lan.vm.network "private_network", type: "static", ip: "10.10.10.#{i + 10}" # Internal network (LAN)
@@ -224,7 +224,7 @@ end
     if $LAN_SUBNET == 1
       config.vm.define "lanB" do |lanB|
         lanB.vm.box = $BOX_IMAGE
-        lanB.vm.hostname = "lanB"
+        lanB.vm.hostname = "lanB-node0"
         lanB.vm.network "private_network", type: "static", ip: "10.10.10.130" # LAN B
 
         if !$SCRIPT_LIST_LANB[0].to_s.strip.empty?
@@ -241,7 +241,7 @@ end
       (1..$NODE_COUNT_LANB).each do |i|
         config.vm.define "lanB#{i}" do |lanB|
           lanB.vm.box = $BOX_IMAGE
-          lanB.vm.hostname = "lanB#{i}"
+          lanB.vm.hostname = "lanB-node#{i}"
           lanB.vm.network "private_network", type: "static", ip: "10.10.10.#{130 + i}" # LAN B
 
             if !$SCRIPT_LIST_LANB[i].to_s.strip.empty?

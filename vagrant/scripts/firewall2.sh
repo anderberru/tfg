@@ -23,6 +23,9 @@ iptables -A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
 # Allow SSH access and other necessary services to the firewall from LAN
 iptables -A INPUT -s 10.10.10.0/24 -p tcp --dport 22 -j ACCEPT
 
+# Block ICMP (ping) from DMZ (10.10.20.0/24) to LAN (10.10.10.0/24)
+iptables -A FORWARD -s 10.10.20.0/24 -d 10.10.10.0/24 -p icmp -j DROP
+
 # Ensure that traffic between LAN A and LAN B is routed correctly
 iptables -A FORWARD -s 10.10.10.0/25 -d 10.10.10.128/25 -j ACCEPT
 iptables -A FORWARD -s 10.10.10.128/25 -d 10.10.10.0/25 -j ACCEPT

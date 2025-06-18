@@ -1050,6 +1050,10 @@ function App() {
         set_vm_list_state('running')
         setProcessComplete(true);
         setOutput((prevOutput) => prevOutput + data.message)
+        if (data.error) {
+          setLiveOutput(prev => prev + data.error + "\n");
+          alert('An error occurred while starting Vagrant. Please check the console for details. You should destroy the cluster and try again.');
+        }
         setLiveOutput(prev => prev + "VAGRANT UP PROCESS ENDED\n");
       })
       .catch((error) => {
@@ -1086,6 +1090,10 @@ function App() {
         setApp_state("stopped")
         setOutput((prevOutput) => prevOutput + data.message)
         setProcessComplete(true);
+        if (data.error) {
+          setLiveOutput(prev => prev + data.error + "\n");
+          alert('An error occurred while stopping Vagrant. Please check the console for details.');
+        }
         setLiveOutput(prev => prev + "VAGRANT HALT PROCESS ENDED\n");
       })
       .catch((error) => {
@@ -1109,6 +1117,11 @@ function App() {
         set_vm_list_state('not created')
         setOutput((prevOutput) => prevOutput + data.message)
         setProcessComplete(true);
+        
+        if (data.error) {
+          setLiveOutput(prev => prev + data.error + "\n");
+          alert('An error occurred while destroying Vagrant. Please check the console for details.');
+        }
         setLiveOutput(prev => prev + "VAGRANT DESTROY PROCESS ENDED\n");
       })
       .catch((error) => {
