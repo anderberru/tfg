@@ -29,7 +29,7 @@ Vagrant.configure("2") do |config|
     end
 
     if $LEARNING == 1
-      load './learning.rb'
+      load './federated.rb'
       configure_cluster(config)
     else
       load './dmz.rb'

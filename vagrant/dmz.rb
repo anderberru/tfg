@@ -72,11 +72,11 @@ end
     end
     
 
-    # Server in the DMZ (accessible from outside and the LAN)
+    # Node in the DMZ network (accessible from outside and the LAN)
     config.vm.define "dmz" do |dmz|
       dmz.vm.box = $BOX_IMAGE
       dmz.vm.hostname = "dmz"
-      dmz.vm.network "private_network", type: "static", ip: "10.10.20.10" # DMZ network
+      dmz.vm.network "private_network", type: "static", ip: "10.10.20.10" # private IP in DMZ network
       
       # Provisioning for the DMZ node
       dmz.vm.provision "shell", inline: <<-SHELL
@@ -117,7 +117,7 @@ end
     (1..$NODE_COUNT_DMZ).each do |i|
         config.vm.define "dmz#{i}" do |dmz|
         dmz.vm.box = $BOX_IMAGE
-        dmz.vm.hostname = "dmz"
+        dmz.vm.hostname = "dmz#{i}"
         dmz.vm.network "private_network", type: "static", ip: "10.10.20.#{10 + i}" # DMZ network
         
         dmz.vm.provision "shell", inline: <<-SHELL

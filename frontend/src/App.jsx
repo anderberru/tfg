@@ -205,7 +205,7 @@ function App() {
         }}
       >
         <option value="0">DMZ</option>
-        <option value="1">Distributed Machine Learning</option>
+        <option value="1">Federated system</option>
       </select>
       </label>
       {Number(learning) === 0 && (
